@@ -40,7 +40,8 @@ describe('judge', () => {
     expect(judge('shape', { ...right, c: null }, ALL)).toEqual({ complete: false, correct: false, wrongIds: [] });
   });
   it('placements에 없는 id도 안 놓은 것으로 센다', () => {
-    const { c, ...rest } = right;
+    const rest = { ...right };
+    delete rest.c;
     expect(judge('shape', rest, ALL)).toEqual({ complete: false, correct: false, wrongIds: [] });
   });
   it('단계별 objects만 본다', () => {
@@ -67,6 +68,10 @@ describe('HINTS', () => {
     expect(HINTS.nebula[2]).toBe('색 말고 밝은지 어두운지로 나눠 보세요.');
     for (const stage of Object.keys(STAGES)) expect(HINTS[stage][1]).toBe('이 카드는 다른 묶음과 더 닮았어요.');
     expect(HINTS.shape[0]).toBe('이 묶음의 카드들, 별이 하나하나 보이나요?');
+  });
+  it('2차 1단계 질문은 3단계 기준의 양 끝말을 미리 말하지 않는다', () => {
+    expect(HINTS.nebula[0]).not.toMatch(/어두|어둡/);
+    expect(HINTS.cluster[0]).not.toMatch(/빽빽|엉성|듬성/);
   });
   it('shape 문장과 cloud/stars 이름에는 성운·성단이 없다', () => {
     const texts = [...HINTS.shape, BIN_LABELS.cloud, BIN_LABELS.stars];
