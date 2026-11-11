@@ -1,0 +1,22 @@
+# 비밀 정보 (절대 커밋 금지)
+.env
+.env.*
+!.env.example
+
+# 의존성과 빌드 결과
+node_modules/
+dist/
+.vercel/
+
+# 용량이 큰 원본 자료 (workspace-backup이 따로 보관)
+art/raw/
+reference/
+
+# 작업 기록과 중간 산출물
+.superpowers/
+_workspace/
+
+# 운영체제가 만드는 파일
+.DS_Store
+Thumbs.db
+desktop.ini
