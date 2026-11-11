@@ -1,0 +1,97 @@
+import { SAVE_KEY, newGame, load, save, clear } from '../../src/logic/save.js';
+
+function fakeStorage(init = {}) {
+  const m = new Map(Object.entries(init));
+  return {
+    getItem: (k) => (m.has(k) ? m.get(k) : null),
+    setItem: (k, v) => { m.set(k, String(v)); },
+    removeItem: (k) => { m.delete(k); },
+  };
+}
+
+const throwing = () => ({
+  getItem() { throw new Error('denied'); },
+  setItem() { throw new Error('denied'); },
+  removeItem() { throw new Error('denied'); },
+});
+
+describe('newGame', () => {
+  it('starts a fresh collect-phase state', () => {
+    expect(newGame(42)).toEqual({
+      version: 1,
+      seed: 42,
+      foundIds: [],
+      phase: 'collect',
+      stage: null,
+      placements: {},
+      wrongSubmits: { shape: 0, nebula: 0, cluster: 0 },
+      bonusOpen: false,
+    });
+  });
+});
+
+describe('save / load', () => {
+  it('round-trips a state', () => {
+    const s = fakeStorage();
+    const state = { ...newGame(7), foundIds: ['a', 'b'], phase: 'sort', stage: 'nebula', placements: { a: 'x' }, bonusOpen: true };
+    state.wrongSubmits = { shape: 1, nebula: 2, cluster: 0 };
+    save(s, state);
+    expect(load(s)).toEqual(state);
+  });
+
+  it('returns null when nothing is saved', () => {
+    expect(load(fakeStorage())).toBeNull();
+  });
+
+  it('returns null when getItem throws', () => {
+    expect(load(throwing())).toBeNull();
+  });
+
+  const good = () => newGame(5);
+  const bad = [
+    ['non-JSON text', 'not json{'],
+    ['null', 'null'],
+    ['a number', '5'],
+    ['an array', '[]'],
+    ['version 2', JSON.stringify({ ...good(), version: 2 })],
+    ['foundIds not array', JSON.stringify({ ...good(), foundIds: 'a' })],
+    ['foundIds with non-string', JSON.stringify({ ...good(), foundIds: ['a', 3] })],
+    ['bad phase', JSON.stringify({ ...good(), phase: 'nope' })],
+    ['bad stage', JSON.stringify({ ...good(), stage: 'galaxy' })],
+    ['stage undefined', JSON.stringify({ ...good(), stage: undefined })],
+    ['placements null', JSON.stringify({ ...good(), placements: null })],
+    ['placements array', JSON.stringify({ ...good(), placements: [] })],
+    ['wrongSubmits missing', JSON.stringify({ ...good(), wrongSubmits: undefined })],
+    ['wrongSubmits missing counter', JSON.stringify({ ...good(), wrongSubmits: { shape: 0, nebula: 0 } })],
+    ['wrongSubmits non-numeric', JSON.stringify({ ...good(), wrongSubmits: { shape: 0, nebula: '1', cluster: 0 } })],
+    ['seed string', JSON.stringify({ ...good(), seed: '5' })],
+    ['seed null', JSON.stringify({ ...good(), seed: null })],
+    ['bonusOpen not boolean', JSON.stringify({ ...good(), bonusOpen: 1 })],
+  ];
+  it.each(bad)('returns null for %s', (_name, text) => {
+    expect(load(fakeStorage({ [SAVE_KEY]: text }))).toBeNull();
+  });
+
+  it.each(['collect', 'sort', 'registry', 'result'])('accepts phase %s', (phase) => {
+    const s = fakeStorage();
+    save(s, { ...good(), phase });
+    expect(load(s).phase).toBe(phase);
+  });
+
+  it('save does not throw when storage throws', () => {
+    expect(() => save(throwing(), newGame(1))).not.toThrow();
+  });
+});
+
+describe('clear', () => {
+  it('removes the saved state', () => {
+    const s = fakeStorage();
+    save(s, newGame(1));
+    clear(s);
+    expect(load(s)).toBeNull();
+  });
+
+  it('does not throw when storage throws', () => {
+    expect(() => clear(throwing())).not.toThrow();
+  });
+});
