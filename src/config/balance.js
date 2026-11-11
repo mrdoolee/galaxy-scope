@@ -9,3 +9,11 @@ export const LOCK_RADIUS = 90;        // 시야 중심에서 이 안에 얼룩�
 export const FOCUS_TOLERANCE = 0.08;  // 초점 허용 오차(0~1 눈금)
 export const FOCUS_HOLD_MS = 500;     // 이 시간 동안 맞춰야 촬영
 export const IDLE_NUDGE_MS = 25000;   // 발견 없이 이만큼 지나면 방향 표시
+
+export const FREE_UNTIL = 4;            // 4장 모을 때까지 의뢰 없음
+export const PICTURE_UNTIL = 10;        // 10장까지 그림 의뢰, 그 뒤 쉬운 말 의뢰
+export const UNLOCK_ALL_AT = 8;         // 8장 모으면 교과서 밖 구역 열림
+export const REQUEST_SIZE = 3;
+export const SCORE = { find: 100, sortCard: 50, wrongSubmit: -30, allTypes: 300, full: 500 };
+export const HINT_MULT = [1, 0.7, 0.4, 0.2];   // 힌트 0~3단계
+export const RANKS = [{ min: 4000, name: '수석 연구원' }, { min: 2800, name: '정식 연구원' }, { min: 0, name: '수습 연구원' }];
