@@ -50,9 +50,21 @@ export const BOOT_TEXT = {
   retry: '다시 시도',
 };
 
+// 하늘 지도에서 처음 한 번 나오는 시작 브리핑(본부 요원의 인사). 묶기 전이므로 분류 용어를 쓰지 않는다.
+export const INTRO_TEXT = {
+  lines: [
+    '어서 오세요, 신입 연구원님! 별빛 관측소에 오신 것을 환영해요.',
+    '밤마다 본부가 임무를 드려요. 찾을 천체와 별자리를 알려 드릴게요.',
+    '별자리에서 밝은 별은 길잡이예요. 그 별을 따라가 보세요.',
+    '해가 뜨기 전에 임무를 마치면 좋아요.',
+    '망원경을 너무 빨리 움직이면 아무것도 보이지 않아요.',
+  ],
+  start: '임무 받기',
+};
+
 export const MAP_TEXT = {
   count: (n, total) => `수집 ${n} / ${total}`,
-  free: '별자리를 눌러 임무를 시작하세요.',
+  missionTitle: (n) => `${nightOrdinal(n)} 밤 임무`,
   picture: (zone, k) => `${zone}에서 이 사진과 닮은 천체 ${k}개를 찾아 주세요.`,
   plain: (zone, k) => `${zone}에서 ${k}개를 찾아 주세요.`,
   done: '다 찾음',
@@ -179,6 +191,8 @@ export const RESULT_TEXT = {
   total: '총점',
   points: (n) => `${formatNumber(n)}점`,
   found: (n) => `카드 발견 ${n}장`,
+  starPoints: '촬영 별점',
+  early: (n) => `동트기 전 완료 ${n}번`,
   stage: { shape: '1차 묶기 (구름 같은 것 / 별 무리)', nebula: '2차 묶기 (성운)', cluster: '2차 묶기 (성단)' },
   stageDetail: (hint, wrong) => `힌트 ${hint}단계 · 틀린 판정 ${wrong}번`,
   allTypes: '다섯 종류 모두 등록',

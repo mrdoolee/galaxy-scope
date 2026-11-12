@@ -1,13 +1,14 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, SCENES } from '../config/game.js';
+import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
-import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT } from '../data/copy.js';
+import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT, INTRO_TEXT } from '../data/copy.js';
 import { mapZoneIds } from '../logic/layout.js';
 import { miniFigure } from '../logic/chart.js';
 import { openZones } from '../logic/requests.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
-import { DECK, DECK_SIZE, getState, refreshRequest, skyMapRedirect } from './gameState.js';
+import { markIntroSeen } from '../logic/save.js';
+import { DECK, DECK_SIZE, getState, refreshRequest, skyMapRedirect, commit } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { onPress, MIN_TOUCH, makeButton } from './ui/button.js';
 import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
@@ -66,6 +67,7 @@ export default class SkyMapScene extends Phaser.Scene {
     }
 
     if (this.bonus) return; // 「결과 화면으로」 버튼은 create()에서 이미 놓았다
+    if (!getState(this).introSeen) this.showIntro();
     // 8장째에 새 구역이 열렸으면 한 번 알린다.
     const openShown = shownIds.filter((id) => open.has(id)).length;
     const seen = this.registry.get('seenOpenCount');
@@ -96,19 +98,58 @@ export default class SkyMapScene extends Phaser.Scene {
     addText(this, GAME_WIDTH - 28, HEADER_H / 2, MAP_TEXT.count(found.size, DECK_SIZE), { size: 30, bold: true, color: COLOR.textBrass, origin: [1, 0.5] });
 
     const targets = remainingTargets(request, found, DECK);
+    if (!request || targets.length === 0) return; // 임무가 없으면 머리글에는 아무것도 쓰지 않는다
     const x = 122;
-    if (!request || targets.length === 0) {
-      addText(this, x, HEADER_H / 2, MAP_TEXT.free, { size: 28, origin: [0, 0.5] });
-      return;
-    }
     const zoneName = ZONES.find((z) => z.id === request.zoneId).nameKo;
+    // 머리글 판(y 6~102) 안에서 위아래로 가운데에 놓는다. 틀(약 10px)에 닿지 않게 위는 12 이상.
+    const place = (rows) => {
+      const total = rows.reduce((n, r) => n + r.height, 0);
+      let y = Math.max(12, 6 + (HEADER_H - 10 - total) / 2);
+      for (const r of rows) { r.setY(y); y += r.height; }
+    };
+    const title = addText(this, x, 0, MAP_TEXT.missionTitle(getState(this).night), { size: MIN_FONT, bold: true, color: COLOR.textBrass });
     if (request.kind === 'picture') {
-      addText(this, x, HEADER_H / 2, MAP_TEXT.picture(zoneName, targets.length), { size: 26, wrap: 560, origin: [0, 0.5] });
-      addRequestThumbs(this, 700, (HEADER_H - 84) / 2, targets, 84, 12);
+      const sentence = addText(this, x, 0, MAP_TEXT.picture(zoneName, targets.length), { size: MIN_FONT, wrap: 665 }).setLineSpacing(-4);
+      place([title, sentence]);
+      addRequestThumbs(this, 790, (HEADER_H - 84) / 2, targets, 84, 12);
     } else {
-      addText(this, x, 20, MAP_TEXT.plain(zoneName, targets.length), { size: 26, bold: true });
-      addText(this, x, 56, plainLooks(targets), { size: 24, color: COLOR.textBrass, wrap: 900 });
+      // 쉬운 말: 머리말과 문장을 한 줄에 두고, 아래에 겉모습을 보여 준다.
+      const sentence = addText(this, x + title.width + 16, 0, MAP_TEXT.plain(zoneName, targets.length), { size: MIN_FONT, bold: true });
+      const looks = addText(this, x, 0, plainLooks(targets), { size: MIN_FONT, color: COLOR.textBrass, wrap: 940 }).setLineSpacing(-4);
+      place([title, looks]);
+      sentence.setY(title.y);
     }
+  }
+
+  // 시작 브리핑: 새 판에서 한 번. 뒤의 지도를 누를 수 없게 화면 전체를 덮고, 「임무 받기」를 눌러야 닫힌다.
+  showIntro() {
+    const layer = this.add.container(0, 0).setDepth(100);
+    layer.add(this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x02040a, 0.78).setOrigin(0).setInteractive());
+    const agent = this.add.image(250, GAME_HEIGHT, 'agent-hq').setOrigin(0.5, 1);
+    agent.setScale(470 / agent.width);
+    layer.add(agent);
+
+    const px = 500, pw = 740, pad = 32, gap = 14, btnH = 96, btnGap = 24;
+    const texts = INTRO_TEXT.lines.map((str, i) => addText(this, px + pad, 0, str, { size: 26, bold: i === 0, wrap: pw - pad * 2 }));
+    const textH = texts.reduce((n, t) => n + t.height, 0) + gap * (texts.length - 1);
+    const plateH = textH + pad * 2;
+    const top = Math.max(16, Math.round((GAME_HEIGHT - (plateH + btnGap + btnH)) / 2));
+    layer.add(addPlate(this, px, top, pw, plateH, 0.96));
+    let y = top + pad;
+    for (const t of texts) {
+      t.setY(y);
+      y += t.height + gap;
+      layer.add(t);
+    }
+    layer.add(makeButton(this, px + pw / 2, top + plateH + btnGap + btnH / 2, {
+      w: 360, h: btnH, label: INTRO_TEXT.start, size: 30,
+      onTap: () => {
+        commit(this, markIntroSeen(getState(this)));
+        layer.destroy();
+      },
+    }).container);
+    layer.setAlpha(0);
+    this.tweens.add({ targets: layer, alpha: 1, duration: 250 });
   }
 
   drawZone(g, zone, status, requested) {

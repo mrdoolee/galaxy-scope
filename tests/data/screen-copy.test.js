@@ -70,3 +70,31 @@ test('불러오기 화면과 하늘 지도의 사진 출처 한 줄: 자료로 �
   expect(line).toBe('사진: ESO · NOIRLab · ESA/Hubble (CC BY 4.0) · 자세한 출처는 결과 화면');
   for (const w of BANNED) expect(line).not.toContain(w);
 });
+
+test('시작 브리핑 글: 세 줄 이상 다섯 줄 이하, 비어 있지 않고 분류 용어가 없다', async () => {
+  const { INTRO_TEXT } = await import('../../src/data/copy.js');
+  expect(INTRO_TEXT.lines.length).toBeGreaterThanOrEqual(3);
+  expect(INTRO_TEXT.lines.length).toBeLessThanOrEqual(5);
+  for (const s of [...INTRO_TEXT.lines, INTRO_TEXT.start]) {
+    expect(s.trim().length).toBeGreaterThan(0);
+    for (const w of BANNED) expect(s, s).not.toContain(w);
+  }
+  expect(INTRO_TEXT.start).toBe('임무 받기');
+});
+
+test('임무 머리글 글: 몇째 밤 머리말과 임무 문장이 있고, 자유 탐색 문장은 없다', async () => {
+  const { MAP_TEXT: M, NIGHT_TEXT: N } = await import('../../src/data/copy.js');
+  expect(M.free).toBeUndefined();
+  expect(M.missionTitle(1)).toBe('첫째 밤 임무');
+  expect(M.missionTitle(12)).toBe('12번째 밤 임무');
+  expect(M.picture('오리온자리', 2)).toContain('오리온자리');
+  expect(N.nightLabel(2)).toBe('둘째 밤');
+  for (const s of [M.missionTitle(3), M.picture('X', 2), M.plain('X', 2)]) for (const w of BANNED) expect(s).not.toContain(w);
+});
+
+test('결과 내역 새 두 줄: 별점 점수와 동트기 전 완료', async () => {
+  const { RESULT_TEXT } = await import('../../src/data/copy.js');
+  expect(RESULT_TEXT.starPoints).toBe('촬영 별점');
+  expect(RESULT_TEXT.early(6)).toBe('동트기 전 완료 6번');
+  expect(RESULT_TEXT.points(850)).toBe('850점');
+});

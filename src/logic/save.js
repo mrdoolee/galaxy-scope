@@ -55,6 +55,9 @@ const isMission = (m) =>
   m.targetIds.every((id) => typeof id === 'string');
 const isRatings = (r) => isPlainObject(r) && Object.values(r).every((v) => v === 1 || v === 2 || v === 3);
 
+// 시작 브리핑을 봤다고 적는다(원래 상태는 바꾸지 않는다).
+export const markIntroSeen = (state) => (state.introSeen ? state : { ...state, introSeen: true });
+
 // 없는 항목과 이상한 값을 항목별로 기본값으로 바꾼다. 고칠 것이 없으면 같은 객체. 필수 항목은 건드리지 않는다.
 export function withDefaults(state) {
   const d = newGame(state.seed);

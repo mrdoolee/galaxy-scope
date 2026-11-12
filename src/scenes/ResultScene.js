@@ -8,7 +8,9 @@ import { addBackdrop } from './ui/backdrop.js';
 import { addText, addPlate, COLOR } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 
-const PANEL = { x: 580, y: 24, w: 684, h: 516 };
+const PANEL = { x: 580, y: 12, w: 684, h: 572 }; // 아래 끝(584)이 버튼 줄(위 끝 594)에 닿지 않는다
+const ROW_H = 36;
+const DETAIL_H = 30;
 const BUTTON_Y = 642;
 const CONFIRM_MS = 3000;
 
@@ -43,24 +45,26 @@ export default class ResultScene extends Phaser.Scene {
     const { x, y, w, h } = PANEL;
     addPlate(this, x, y, w, h, 0.92);
     const cx = x + w / 2;
-    addText(this, cx, y + 40, RESULT_TEXT.title, { size: 32, bold: true, origin: [0.5, 0.5] });
-    addText(this, cx - 12, y + 108, RESULT_TEXT.total, { size: 32, bold: true, color: COLOR.textDim, origin: [1, 0.5] });
-    addText(this, cx + 12, y + 108, RESULT_TEXT.points(r.total), { size: 60, bold: true, color: COLOR.textBrass, origin: [0, 0.5] });
+    addText(this, cx, y + 38, RESULT_TEXT.title, { size: 32, bold: true, origin: [0.5, 0.5] });
+    addText(this, cx - 12, y + 100, RESULT_TEXT.total, { size: 32, bold: true, color: COLOR.textDim, origin: [1, 0.5] });
+    addText(this, cx + 12, y + 100, RESULT_TEXT.points(r.total), { size: 60, bold: true, color: COLOR.textBrass, origin: [0, 0.5] });
 
     // 점수 내역: 왼쪽 항목, 오른쪽 점수. 묶기는 아래에 힌트 단계와 틀린 판정 횟수.
     const lx = x + 32;
     const rx = x + w - 32;
-    let ly = y + 168;
+    let ly = y + 150;
     const line = (label, pts, detail) => {
       addText(this, lx, ly, label, { size: 26 });
       addText(this, rx, ly, RESULT_TEXT.points(pts), { size: 26, bold: true, origin: [1, 0] });
-      ly += 38;
+      ly += ROW_H;
       if (detail) {
-        addText(this, lx + 20, ly - 4, detail, { size: 24, color: COLOR.textDim });
-        ly += 32;
+        addText(this, lx + 20, ly - 6, detail, { size: 24, color: COLOR.textDim });
+        ly += DETAIL_H;
       }
     };
     line(RESULT_TEXT.found(r.found), r.findPoints);
+    line(RESULT_TEXT.starPoints, r.starPoints);
+    line(RESULT_TEXT.early(r.earlyMissions), r.earlyPoints);
     for (const s of r.stages) line(RESULT_TEXT.stage[s.stage], s.points, RESULT_TEXT.stageDetail(s.hintLevel, s.wrongSubmits));
     line(RESULT_TEXT.allTypes, r.allTypesPoints);
     line(RESULT_TEXT.full, r.fullPoints);

@@ -266,3 +266,16 @@ describe('repairState: 임무 정리', () => {
     expect(r.dawned).toBe(false);
   });
 });
+
+describe('markIntroSeen', () => {
+  it('sets introSeen without changing the original state', async () => {
+    const { markIntroSeen } = await import('../../src/logic/save.js');
+    const s = newGame(1);
+    const next = markIntroSeen(s);
+    expect(next.introSeen).toBe(true);
+    expect(s.introSeen).toBe(false);
+    expect(next).not.toBe(s);
+    expect({ ...next, introSeen: false }).toEqual(s);
+    expect(markIntroSeen(next)).toBe(next);
+  });
+});
