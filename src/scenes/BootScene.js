@@ -10,7 +10,8 @@ import { addAttribution } from './ui/attribution.js';
 // 게임 그림(public/art)과 필수 카드 사진(public/photos). 보너스 사진은 보너스 단계에서 따로 불러온다.
 const ART = ['bg-observatory', 'eyepiece-frame', 'card-frame', 'card-back-unknown', 'agent-hq', 'bin-tray',
   'icon-zoom', 'icon-focus', 'icon-hint', 'rank-badge-1', 'rank-badge-2', 'rank-badge-3',
-  'btn-plate', 'btn-plate-round', 'panel-plate'];
+  'btn-plate', 'btn-plate-round', 'panel-plate',
+  'icon-shutter', 'icon-star', 'icon-star-empty', 'icon-sun', 'icon-moon'];
 const FILES = [
   ...ART.map((k) => ({ key: k, url: `art/${k}.png` })),
   ...DECK.map((o) => ({ key: photoKey(o.id), url: o.photo.file })),

@@ -3,7 +3,7 @@
 //   node tools/gen-art.mjs --postprocess   (alpha cleanup of existing files, no API call, no key needed)
 // Reads OPENAI_API_KEY and OPENAI_IMAGE_MODEL from process.env only; never prints the key.
 // Skips files that already exist in public/art unless --force is given.
-// Optional per asset: trim (cut transparent margins after cleanup), maxSide (shrink to fit inside this square).
+// Optional per asset: deriveFrom (build from another existing file: keep its alpha, dark navy fill + dim brass outline, no API call), trim (cut transparent margins after cleanup), maxSide (shrink to fit inside this square).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -104,6 +104,22 @@ async function trimAlpha(buf) {
   return sharp(buf).extract({ left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 });
 }
 
+// Empty-outline version of a shape: same alpha, dark navy fill, dim brass ring along the inner edge (distance-based).
+async function deriveEmpty(buf) {
+  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height, R = 6;
+  const al = (x, y) => (x < 0 || y < 0 || x >= W || y >= H ? 0 : data[(y * W + x) * 4 + 3]);
+  const out = Buffer.alloc(W * H * 4);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const a = al(x, y); const o = (y * W + x) * 4;
+    let edge = false;
+    if (a > 0) for (let dy = -R; dy <= R && !edge; dy++) for (let dx = -R; dx <= R; dx++) if (dx * dx + dy * dy <= R * R && al(x + dx, y + dy) < 128) { edge = true; break; }
+    const c = edge ? [138, 112, 62] : [18, 28, 52];
+    out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = a;
+  }
+  return sharp(out, { raw: { width: W, height: H, channels: 4 } });
+}
+
 const pngOpts = (a) => ({ compressionLevel: 9, ...(a.palette ? { palette: true, quality: 92, effort: 10 } : {}) });
 
 async function main() {
@@ -128,6 +144,13 @@ async function main() {
   mkdirSync(outDir, { recursive: true });
   const todo = manifest.assets.filter((a) => (!only.length || only.includes(a.file)) && (force || !existsSync(resolve(outDir, a.file))));
   await Promise.all(todo.map(async (a) => {
+    if (a.deriveFrom) {
+      const src = resolve(outDir, a.deriveFrom);
+      if (!existsSync(src)) { console.error(`${a.file}: ${a.deriveFrom} is missing (generate it first)`); return; }
+      await (await deriveEmpty(readFileSync(src))).png(pngOpts(a)).toFile(resolve(outDir, a.file));
+      console.log(`wrote ${a.file}`);
+      return;
+    }
     const body = { model, prompt: `${manifest.style} ${a.prompt}`, size: a.request_size, n: 1 };
     if (a.transparent) body.background = 'transparent';
     const res = await fetch(GEN_URL, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

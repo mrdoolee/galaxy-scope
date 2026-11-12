@@ -30,6 +30,16 @@
     { "file": "btn-plate-round.png", "size": [1024, 1024], "request_size": "1024x1024", "transparent": true, "trim": true, "maxSide": 384, "palette": true,
       "prompt": "A single round game UI button plate seen straight on, centred: a flat dark navy circular face with an even brass rim, plain and empty in the middle (no text, no icon, no symbol) so an icon can sit on top. Transparent background outside the circle." },
     { "file": "panel-plate.png", "size": [1536, 1024], "request_size": "1536x1024", "transparent": true, "trim": true, "maxSide": 768, "palette": true,
-      "prompt": "A single rectangular game UI text panel seen straight on, centred and spanning most of the image: a flat dark navy face with a thin even brass border line of constant thickness all around and softly rounded corners. The face is completely plain and empty (no text, no pattern, no ornament) so it can be stretched as a text box. Transparent background outside the panel." }
+      "prompt": "A single rectangular game UI text panel seen straight on, centred and spanning most of the image: a flat dark navy face with a thin even brass border line of constant thickness all around and softly rounded corners. The face is completely plain and empty (no text, no pattern, no ornament) so it can be stretched as a text box. Transparent background outside the panel." },
+    { "file": "icon-shutter.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
+      "prompt": "A single bold game icon: a brass camera shutter button, a round brass ring with a smaller raised round button in the middle and a few simple aperture-blade shapes, centred, thick simple shapes readable at 88 pixels, transparent background." },
+    { "file": "icon-star.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
+      "prompt": "A single bold game icon: one solid five-pointed star in warm gold and brass with a soft highlight, perfectly upright and centred, filling most of the image, thick simple shape readable at 40 pixels, transparent background." },
+    { "file": "icon-star-empty.png", "size": [256, 256], "transparent": true, "deriveFrom": "icon-star.png",
+      "prompt": "Derived by gen-art.mjs from icon-star.png: same alpha shape, dark navy fill with a dim brass outline." },
+    { "file": "icon-sun.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
+      "prompt": "A single bold game icon: a simple warm sun, a round orange-gold disc with short thick triangular rays around it, centred, thick simple shapes readable at 40 pixels, transparent background." },
+    { "file": "icon-moon.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
+      "prompt": "A single bold game icon: a simple crescent moon in pale silver-cream with a soft highlight, centred, thick simple shape readable at 40 pixels, transparent background." }
   ]
 }
