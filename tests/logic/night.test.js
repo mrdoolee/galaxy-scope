@@ -1,6 +1,6 @@
 import { newGame } from '../../src/logic/save.js';
 import {
-  nightLength, assignMission, tickNight, isDawn, endDay, missionDone, completeMission, resumeNight,
+  nightLength, assignMission, tickNight, isDawn, endDay, missionDone, completeMission, resumeNight, settleMission,
 } from '../../src/logic/night.js';
 
 const req3 = { kind: 'picture', zoneId: 'orion', targetIds: ['a', 'b', 'c'] };
@@ -131,5 +131,31 @@ describe('resumeNight', () => {
     expect(resumeNight(s, new Set(['a']))).toBe(s);
     const n = newGame(1);
     expect(resumeNight(n, new Set())).toBe(n);
+  });
+});
+
+describe('settleMission', () => {
+  const all = new Set(['a', 'b', 'c']);
+  it('동트기 전에 끝난 임무는 한 번만, 두 번 돌려도 한 번만 반영한다', () => {
+    const once = settleMission(started(), all);
+    expect(once.earlyMissions).toBe(1);
+    expect(once.night).toBe(2);
+    expect(once.mission).toBeNull();
+    const twice = settleMission(once, all);
+    expect(twice).toBe(once);
+    expect(twice.earlyMissions).toBe(1);
+    expect(twice.night).toBe(2);
+  });
+  it('해가 뜬 뒤 끝난 임무는 점수 없이 밤만 넘긴다', () => {
+    const s = settleMission({ ...started(), dawned: true }, all);
+    expect(s.earlyMissions).toBe(0);
+    expect(s.night).toBe(2);
+    expect(s.mission).toBeNull();
+  });
+  it('끝나지 않은 임무와 임무 없음은 같은 객체', () => {
+    const s = started();
+    expect(settleMission(s, new Set(['a']))).toBe(s);
+    const n = newGame(1);
+    expect(settleMission(n, all)).toBe(n);
   });
 });

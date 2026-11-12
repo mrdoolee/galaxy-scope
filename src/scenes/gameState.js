@@ -1,5 +1,5 @@
 import { load, save, clear, newGame, repairState } from '../logic/save.js';
-import { assignMission, resumeNight } from '../logic/night.js';
+import { assignMission, resumeNight, settleMission } from '../logic/night.js';
 import { OBJECTS } from '../data/objects.js';
 import { ZONES } from '../data/zones.js';
 import { openZones, currentRequest, currentTermRequest } from '../logic/requests.js';
@@ -84,8 +84,10 @@ export function refreshRequest(scene) {
     scene.registry.set('request', term);
     return term;
   }
-  const req = currentRequest(state.mission ?? null, found, state.seed, DECK, openZones(found.size, ZONES));
-  const withMission = assignMission(state, req);
+  // 끝난 임무를 먼저 반영(동트기 전 완료, 밤 번호)한 뒤 다음 임무를 정한다.
+  const settled = settleMission(state, found);
+  const req = currentRequest(settled.mission ?? null, found, state.seed, DECK, openZones(found.size, ZONES));
+  const withMission = assignMission(settled, req);
   if (withMission !== state) commit(scene, withMission);
   scene.registry.set('request', req);
   return req;

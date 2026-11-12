@@ -216,6 +216,23 @@ describe('withDefaults: 이상한 값은 그 항목만 기본값으로', () => {
     for (const k of NEW_KEYS.filter((x) => x !== key)) expect(r[k]).toEqual(newGame(9)[k]);
   });
 
+  it('임무가 있는데 남은 밤이 null이면 임무 길이만큼 새로 준다', () => {
+    const r = loadOf(oldFormat({ mission: okMission, nightLeftMs: -1 }));
+    expect(r.mission).toEqual(okMission);
+    expect(r.nightLeftMs).toBe(120000);
+    expect(loadOf(oldFormat({ mission: okMission })).nightLeftMs).toBe(120000);
+  });
+
+  it('임무가 없으면 남은 밤과 해 뜸 표시를 비운다', () => {
+    const r = loadOf(oldFormat({ mission: null, nightLeftMs: 5000, dawned: true }));
+    expect(r.nightLeftMs).toBeNull();
+    expect(r.dawned).toBe(false);
+    const bad = loadOf(oldFormat({ mission: { ...okMission, kind: 'x' }, nightLeftMs: 5000, dawned: true }));
+    expect(bad.mission).toBeNull();
+    expect(bad.nightLeftMs).toBeNull();
+    expect(bad.dawned).toBe(false);
+  });
+
   it('올바른 값은 그대로 둔다', () => {
     const good = { ...newGame(9), mission: okMission, night: 4, nightLeftMs: 0, dawned: true, earlyMissions: 2, ratings: { a: 3, b: 1 }, introSeen: true };
     expect(loadOf(good)).toEqual(good);

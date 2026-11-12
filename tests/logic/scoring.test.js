@@ -61,7 +61,7 @@ describe('rankFor', () => {
     expect(rankFor(floor)).toBe('수습 연구원');
   });
 
-  it('단계마다 한 번씩 틀리면 정식, 두 번씩 틀리면 수습', () => {
+  it('단계마다 한 번씩만 틀려도(4110) 두 번씩 틀려도(3420) 수습', () => {
     const run = (w) => totalScore({
       found: 20,
       typesRegistered: 5,

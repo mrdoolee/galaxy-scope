@@ -59,10 +59,17 @@ export function completeMission(state) {
   };
 }
 
-// 불러온 뒤: 임무를 이미 다 찾았으면 completeMission, 해가 뜬 채 저장됐으면 endDay.
+// 끝난 임무를 한 번만 반영한다: 임무가 있고 대상을 다 찾았으면 completeMission(임무가 비므로 다시 불러도 두 번 세지 않는다),
+// 아니면 같은 객체. 어느 장면이 먼저 알아채도 같은 결과다.
+export function settleMission(state, foundIds) {
+  return missionDone(state, foundIds) ? completeMission(state).state : state;
+}
+
+// 불러온 뒤: 끝난 임무는 settleMission, 해가 뜬 채 저장됐으면 endDay.
 // 다 찾은 임무는 해가 뜬 것으로 치지 않는다(마지막 대상을 찾은 순간 시간이 0이었어도 동트기 전 완료).
 export function resumeNight(state, foundIds) {
-  if (missionDone(state, foundIds)) return completeMission(state).state;
+  const settled = settleMission(state, foundIds);
+  if (settled !== state) return settled;
   if (isDawn(state)) return endDay(state, foundIds);
   return state;
 }

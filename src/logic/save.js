@@ -1,4 +1,5 @@
 import { STAGE_ORDER as STAGES } from './sorting.js';
+import { nightLength } from './night.js';
 
 export const SAVE_KEY = 'galaxy-archive-save-v1';
 
@@ -67,6 +68,14 @@ export function withDefaults(state) {
   if (state.nightLeftMs === undefined) patch.nightLeftMs = d.nightLeftMs;
   if (typeof state.dawned !== 'boolean') patch.dawned = d.dawned;
   if (!isCount(state.earlyMissions, 0)) patch.earlyMissions = d.earlyMissions;
+  // 임무와 밤 시간, 해 뜸 표시가 서로 맞아야 한다: 임무가 있는데 남은 밤이 없으면 새로 주고, 임무가 없으면 둘 다 비운다.
+  const mission = 'mission' in patch ? patch.mission : state.mission;
+  const left = 'nightLeftMs' in patch ? patch.nightLeftMs : state.nightLeftMs;
+  if (mission && left === null) patch.nightLeftMs = nightLength(mission.targetIds.length);
+  if (!mission) {
+    if (left !== null) patch.nightLeftMs = null;
+    if (('dawned' in patch ? patch.dawned : state.dawned) !== false) patch.dawned = false;
+  }
   if (!isRatings(state.ratings)) patch.ratings = {};
   if (typeof state.introSeen !== 'boolean') patch.introSeen = d.introSeen;
   return Object.keys(patch).length === 0 ? state : { ...state, ...patch };
