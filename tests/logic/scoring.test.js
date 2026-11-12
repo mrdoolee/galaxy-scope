@@ -1,4 +1,5 @@
-import { stageScore, totalScore, rankFor } from '../../src/logic/scoring.js';
+import { stageScore, totalScore, rankFor, isFull } from '../../src/logic/scoring.js';
+import { DECK_CARDS } from '../../src/config/balance.js';
 
 describe('stageScore', () => {
   it('힌트 없이 전부 맞히면 카드당 50점', () => {
@@ -30,6 +31,8 @@ describe('totalScore', () => {
   });
   it('20장 미만이면 full 보너스 없음', () => {
     expect(totalScore({ ...clean, found: 19 })).toBe(4800 - 100 - 500);
+    expect(isFull(19)).toBe(false);
+    expect(isFull(DECK_CARDS)).toBe(true);
   });
 });
 

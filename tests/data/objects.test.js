@@ -1,8 +1,12 @@
 import { existsSync } from 'node:fs';
 import { OBJECTS, TYPES } from '../../src/data/objects.js';
 import { ZONES } from '../../src/data/zones.js';
+import { DECK_CARDS } from '../../src/config/balance.js';
 const deck = OBJECTS.filter((o) => o.deck);
-test('필수 카드는 20장', () => { expect(deck).toHaveLength(20); });
+test('필수 카드는 20장(balance.js의 DECK_CARDS)', () => {
+  expect(DECK_CARDS).toBe(20);
+  expect(deck).toHaveLength(DECK_CARDS);
+});
 test('다섯 종류가 각각 3장 이상', () => {
   for (const t of TYPES) expect(deck.filter((o) => o.type === t).length).toBeGreaterThanOrEqual(3);
 });

@@ -18,6 +18,7 @@ import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
 import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
 import { makeFocusSlider } from './ui/focusSlider.js';
 import { makeMiniMap } from './ui/miniMap.js';
+import { addBackdropPiece } from './ui/backdrop.js';
 
 const CX = GAME_WIDTH / 2;
 const CY = GAME_HEIGHT / 2;
@@ -145,12 +146,7 @@ export default class ScanScene extends Phaser.Scene {
   // ── 망원경 틀: 구멍 밖은 틀과 양옆 배경 띠가 모두 가린다
   buildFrame() {
     this.add.image(CX, CY, 'eyepiece-frame').setOrigin(HOLE.cx / HOLE.size, HOLE.cy / HOLE.size).setScale(FRAME_SCALE);
-    const strip = (x0, x1) => {
-      const bg = this.add.image(0, 0, 'bg-observatory').setOrigin(0, 0);
-      const s = Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height);
-      bg.setScale(s).setPosition(0, (GAME_HEIGHT - bg.height * s) / 2).setTint(0x8a93a8);
-      bg.setCrop(x0 / s, 0, (x1 - x0) / s, bg.height);
-    };
+    const strip = (x0, x1) => addBackdropPiece(this, { x: x0, y: 0, w: x1 - x0, h: GAME_HEIGHT }, 0x8a93a8);
     strip(0, Math.ceil(FRAME_LEFT) + 4);
     strip(Math.floor(FRAME_RIGHT) - 4, GAME_WIDTH);
   }

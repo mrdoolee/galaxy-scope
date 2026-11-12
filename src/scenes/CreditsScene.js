@@ -3,11 +3,12 @@ import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { OBJECTS } from '../data/objects.js';
 import { CREDITS_TEXT } from '../data/copy.js';
 import { createDrag } from '../logic/drag.js';
-import { addBackdrop } from './SkyMapScene.js';
+import { addBackdrop, addBackdropPiece } from './ui/backdrop.js';
 import { addText, addPlate, COLOR } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 
 const HEADER_H = 116;
+const TINT = 0x4a5370;
 const LIST_X = 40;
 const LIST_W = GAME_WIDTH - 80;
 
@@ -22,7 +23,7 @@ export default class CreditsScene extends Phaser.Scene {
   }
 
   create() {
-    addBackdrop(this, 0x4a5370);
+    addBackdrop(this, TINT);
     this.scroll = 0;
     this.list = this.add.container(0, HEADER_H);
     this.contentH = this.buildList();
@@ -54,11 +55,7 @@ export default class CreditsScene extends Phaser.Scene {
 
   // 위쪽 머리글은 배경 그림을 잘라 덮어, 넘긴 목록이 그 아래로 들어가 보이지 않게 한다.
   buildHeader() {
-    const bg = this.add.image(0, 0, 'bg-observatory').setOrigin(0, 0);
-    const s = Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height);
-    const top = (GAME_HEIGHT - bg.height * s) / 2;
-    bg.setScale(s).setPosition(0, top).setTint(0x4a5370).setDepth(10);
-    bg.setCrop(0, -top / s, bg.width, HEADER_H / s);
+    addBackdropPiece(this, { x: 0, y: 0, w: GAME_WIDTH, h: HEADER_H }, TINT).setDepth(10);
     addPlate(this, 8, 8, 1000, HEADER_H - 16, 0.95).setDepth(10);
     addText(this, 32, 38, CREDITS_TEXT.title, { size: 32, bold: true, origin: [0, 0.5] }).setDepth(10);
     addText(this, 32, 80, CREDITS_TEXT.edited, { size: 26, color: COLOR.textBrass, origin: [0, 0.5] }).setDepth(10);

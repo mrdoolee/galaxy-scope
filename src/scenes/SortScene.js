@@ -6,7 +6,7 @@ import { binCell, rowSlotX, clampScroll, dropTarget, rectContains } from '../log
 import { createDrag, gestureKind } from '../logic/drag.js';
 import { BIN_LABELS, HINTS, SORT_TEXT, SORT_STAGE_TEXT } from '../data/copy.js';
 import { DECK, getState, commit, sceneForPhase } from './gameState.js';
-import { addBackdrop } from './SkyMapScene.js';
+import { addBackdrop } from './ui/backdrop.js';
 import { addPlate } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { makeCard, setCardGlow } from './ui/card.js';

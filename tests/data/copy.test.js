@@ -1,6 +1,9 @@
-import { TYPE_INFO, BIN_LABELS, HINTS, SORT_TEXT, SORT_STAGE_TEXT, REGISTRY_TEXT, RESULT_TEXT, CREDITS_TEXT, formatNumber } from '../../src/data/copy.js';
+import { TYPE_INFO, BIN_LABELS, HINTS, SORT_TEXT, SORT_STAGE_TEXT, REGISTRY_TEXT, RESULT_TEXT, CREDITS_TEXT, MAP_TEXT, SCAN_TEXT, formatNumber } from '../../src/data/copy.js';
 import { TYPES } from '../../src/data/objects.js';
-import { STAGES } from '../../src/logic/sorting.js';
+import { STAGES, STAGE_ORDER } from '../../src/logic/sorting.js';
+import { STAGE_ORDER as FLOW_STAGE_ORDER } from '../../src/logic/sortFlow.js';
+import { newGame } from '../../src/logic/save.js';
+import { UNLOCK_ALL_AT, DECK_CARDS } from '../../src/config/balance.js';
 
 describe('TYPE_INFO', () => {
   it('다섯 종류를 모두 갖고, 교과서 문장과 글자 그대로 같다', () => {
@@ -86,6 +89,20 @@ describe('도감, 결과, 출처 화면 글', () => {
   it('결과 화면 버튼', () => {
     expect(RESULT_TEXT.restart).toBe('처음부터 다시');
     expect(RESULT_TEXT.credits).toBe('사진 출처');
+  });
+});
+
+describe('글 속 숫자는 balance.js 값을 따른다', () => {
+  it('구역이 열리는 장 수, 모을 장 수', () => {
+    expect(MAP_TEXT.lockedTap).toBe(`카드를 ${UNLOCK_ALL_AT}장 모으면 열려요.`);
+    expect(SCAN_TEXT.allDone.startsWith(`${DECK_CARDS}장을 모두 모았어요!`)).toBe(true);
+    expect(RESULT_TEXT.full).toBe(`${DECK_CARDS}장 완성`);
+  });
+
+  it('단계 목록은 한 곳(sorting.js)에서 온다', () => {
+    expect(STAGE_ORDER).toEqual(Object.keys(STAGES));
+    expect(FLOW_STAGE_ORDER).toBe(STAGE_ORDER);
+    expect(Object.keys(newGame(1).wrongSubmits)).toEqual(STAGE_ORDER);
   });
 });
 

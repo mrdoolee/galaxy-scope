@@ -1,7 +1,8 @@
+import { STAGE_ORDER as STAGES } from './sorting.js';
+
 export const SAVE_KEY = 'galaxy-archive-save-v1';
 
 const PHASES = ['collect', 'sort', 'registry', 'result'];
-const STAGES = ['shape', 'nebula', 'cluster'];
 
 export function newGame(seed) {
   return {
@@ -11,7 +12,7 @@ export function newGame(seed) {
     phase: 'collect',
     stage: null,
     placements: {},
-    wrongSubmits: { shape: 0, nebula: 0, cluster: 0 },
+    wrongSubmits: Object.fromEntries(STAGES.map((s) => [s, 0])),
     bonusOpen: false,
   };
 }

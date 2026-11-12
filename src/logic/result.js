@@ -1,7 +1,7 @@
 // 결과 화면의 점수 내역. Phaser에 의존하지 않는다.
 import { SCORE, RANKS } from '../config/balance.js';
 import { nextHintLevel } from './sorting.js';
-import { stageScore, totalScore, rankFor } from './scoring.js';
+import { stageScore, totalScore, rankFor, isFull } from './scoring.js';
 import { STAGE_ORDER, stageCards, foundCards, safeCount } from './sortFlow.js';
 
 // 수습 1, 정식 2, 수석 3(rank-badge-N.png).
@@ -33,7 +33,7 @@ export function scoreReport(state, cards) {
     stages,
     typesRegistered,
     allTypesPoints: typesRegistered === 5 ? SCORE.allTypes : 0,
-    fullPoints: found >= 20 ? SCORE.full : 0,
+    fullPoints: isFull(found) ? SCORE.full : 0,
     total,
     rank,
     rankLevel: rankLevel(rank),

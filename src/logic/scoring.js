@@ -1,4 +1,7 @@
-import { SCORE, HINT_MULT, RANKS } from '../config/balance.js';
+import { SCORE, HINT_MULT, RANKS, DECK_CARDS } from '../config/balance.js';
+
+// 필수 카드를 다 모았는가(full 보너스).
+export const isFull = (found) => found >= DECK_CARDS;
 
 export function stageScore(cardCount, hintLevel, wrongSubmits) {
   const raw = cardCount * SCORE.sortCard * HINT_MULT[hintLevel] + wrongSubmits * SCORE.wrongSubmit;
@@ -9,7 +12,7 @@ export function totalScore({ found, stages, typesRegistered }) {
   let total = found * SCORE.find;
   for (const s of stages) total += stageScore(s.cardCount, s.hintLevel, s.wrongSubmits);
   if (typesRegistered === 5) total += SCORE.allTypes;
-  if (found >= 20) total += SCORE.full;
+  if (isFull(found)) total += SCORE.full;
   return total;
 }
 

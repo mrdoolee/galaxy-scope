@@ -56,9 +56,9 @@ export function currentTermRequest(prev, foundIds, seed, objects) {
   if (left.length === 0) return null;
   // 마지막으로 찾은 보너스 천체의 종류 다음 차례부터, 아직 남은 첫 종류(찾은 순서는 Set의 삽입 순서).
   const bonusById = new Map(objects.filter((o) => !o.deck).map((o) => [o.id, o]));
-  const lastFound = [...foundIds].filter((id) => bonusById.has(id)).pop();
+  const bonusFound = [...foundIds].filter((id) => bonusById.has(id));
+  const lastFound = bonusFound[bonusFound.length - 1];
   const start = lastFound ? TERM_TYPES.indexOf(bonusById.get(lastFound).type) + 1 : 0;
-  const bonusFound = [...foundIds].filter((id) => bonusById.has(id)).length;
   const type = Array.from({ length: TERM_TYPES.length }, (_, i) => TERM_TYPES[(start + i) % TERM_TYPES.length]).find((t) => left.includes(t));
-  return makeTermRequest(type, foundIds, objects, makeRng(seedFor(seed, `term:${bonusFound}`)));
+  return makeTermRequest(type, foundIds, objects, makeRng(seedFor(seed, `term:${bonusFound.length}`)));
 }

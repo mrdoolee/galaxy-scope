@@ -1,4 +1,7 @@
 // 학생에게 보이는 글. shape 단계 문장과 cloud/stars 이름에는 "성운", "성단"을 쓰지 않는다(아직 열리기 전이다).
+// 글 속 장 수는 balance.js에서 가져온다.
+import { DECK_CARDS, UNLOCK_ALL_AT } from '../config/balance.js';
+
 export const BIN_LABELS = {
   cloud: '구름 같은 것',
   stars: '별 무리',
@@ -53,7 +56,7 @@ export const MAP_TEXT = {
   picture: (zone, k) => `${zone}에서 이 사진과 닮은 천체 ${k}개를 찾아 주세요.`,
   plain: (zone, k) => `${zone}에서 ${k}개를 찾아 주세요.`,
   done: '다 찾음',
-  lockedTap: '카드를 8장 모으면 열려요.',
+  lockedTap: `카드를 ${UNLOCK_ALL_AT}장 모으면 열려요.`,
   unlocked: '새 별자리 구역이 열렸어요!',
 };
 
@@ -71,7 +74,7 @@ export const SCAN_TEXT = {
   next: '계속 훑기',
   zoneDone: '이 구역은 다 찾았어요.',
   toMap: '지도로 돌아가기',
-  allDone: '20장을 모두 모았어요! 이제 카드를 묶어 볼 차례예요.',
+  allDone: `${DECK_CARDS}장을 모두 모았어요! 이제 카드를 묶어 볼 차례예요.`,
   toSort: '묶기 시작',
   request: '의뢰',
   requestElsewhere: (zone) => `의뢰 구역: ${zone}`,
@@ -146,7 +149,7 @@ export const RESULT_TEXT = {
   stage: { shape: '1차 묶기 (구름 같은 것 / 별 무리)', nebula: '2차 묶기 (성운)', cluster: '2차 묶기 (성단)' },
   stageDetail: (hint, wrong) => `힌트 ${hint}단계 · 틀린 판정 ${wrong}번`,
   allTypes: '다섯 종류 모두 등록',
-  full: '20장 완성',
+  full: `${DECK_CARDS}장 완성`,
   credits: '사진 출처',
   restart: '처음부터 다시',
   restartConfirm: '한 번 더 누르면 처음부터',

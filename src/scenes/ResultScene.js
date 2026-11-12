@@ -4,7 +4,7 @@ import { RESULT_TEXT, BONUS_TEXT } from '../data/copy.js';
 import { scoreReport } from '../logic/result.js';
 import { openBonus } from '../logic/bonus.js';
 import { DECK, getState, resetGame, commit, sceneForPhase } from './gameState.js';
-import { addBackdrop } from './SkyMapScene.js';
+import { addBackdrop } from './ui/backdrop.js';
 import { addText, addPlate, COLOR } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 

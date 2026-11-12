@@ -1,10 +1,10 @@
 // 묶기 단계의 진행 상태 바꾸기. Phaser에 의존하지 않는다.
 // 모두 새 상태를 돌려주고 받은 상태는 바꾸지 않는다(저장은 장면이 한다).
-import { STAGES, judge, nextHintLevel } from './sorting.js';
+import { STAGES, STAGE_ORDER, judge, nextHintLevel } from './sorting.js';
 import { makeRng, seedFor } from './rng.js';
 import { HIGHLIGHT_MAX } from '../config/balance.js';
 
-export const STAGE_ORDER = ['shape', 'nebula', 'cluster'];
+export { STAGE_ORDER };
 
 // 저장된 틀린 횟수가 이상해도(음수, 소수) 0 이상의 정수로 본다.
 export const safeCount = (n) => (Number.isFinite(n) && n > 0 ? Math.floor(n) : 0);

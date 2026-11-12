@@ -2,7 +2,7 @@
 import { seedFor } from '../../src/logic/rng.js';
 import { focusTarget, focusBlur } from '../../src/logic/scan.js';
 import { currentRequest } from '../../src/logic/requests.js';
-import { FOCUS_TOLERANCE, FREE_UNTIL, PICTURE_UNTIL } from '../../src/config/balance.js';
+import { FOCUS_TOLERANCE, PICTURE_UNTIL } from '../../src/config/balance.js';
 
 describe('seedFor', () => {
   it('같은 입력이면 같은 값, 키나 시드가 다르면 다른 값', () => {
@@ -80,9 +80,8 @@ describe('currentRequest', () => {
     expect(currentRequest(r, f, 3, deck, zones).kind).toBe('plain');
   });
 
-  it('새로 고침 뒤에도 같은 의뢰가 다시 나온다 (시드와 찾은 수가 같으면)', () => {
+  it('앞 의뢰가 없을 때 같은 시드와 같은 찾은 카드면 같은 의뢰를 새로 만든다', () => {
     const f = found('x0', 'x1', 'x2', 'x3', 'x4');
     expect(currentRequest(null, f, 9, deck, zones)).toEqual(currentRequest(null, new Set(f), 9, deck, zones));
-    expect(FREE_UNTIL).toBeLessThanOrEqual(5);
   });
 });

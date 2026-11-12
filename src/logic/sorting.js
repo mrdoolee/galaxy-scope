@@ -5,6 +5,9 @@ export const STAGES = {
   cluster: { bins: ['loose', 'dense'] },
 };
 
+// 묶기 단계 순서. 저장 검사(save.js)와 진행(sortFlow.js)이 함께 쓴다.
+export const STAGE_ORDER = Object.keys(STAGES);
+
 export function correctBin(stage, object) {
   switch (stage) {
     case 'shape':

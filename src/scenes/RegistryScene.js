@@ -5,7 +5,7 @@ import { TYPE_INFO, REGISTRY_TEXT } from '../data/copy.js';
 import { foundCards, finishRegistry } from '../logic/sortFlow.js';
 import { registryOrder, zoneGroups } from '../logic/catalog.js';
 import { DECK, getState, commit, sceneForPhase } from './gameState.js';
-import { addBackdrop } from './SkyMapScene.js';
+import { addBackdrop } from './ui/backdrop.js';
 import { addText, addPlate, COLOR } from './ui/style.js';
 import { makeButton, onPress } from './ui/button.js';
 import { makeCard, makeCardBack } from './ui/card.js';
