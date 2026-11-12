@@ -5,6 +5,9 @@ import BootScene from './scenes/BootScene.js';
 import SkyMapScene from './scenes/SkyMapScene.js';
 import ScanScene from './scenes/ScanScene.js';
 import SortScene from './scenes/SortScene.js';
+import RegistryScene from './scenes/RegistryScene.js';
+import ResultScene from './scenes/ResultScene.js';
+import CreditsScene from './scenes/CreditsScene.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -18,7 +21,7 @@ const game = new Phaser.Game({
   },
   // 두 번째 손가락을 알아채야 끌기를 끝낼 수 있다.
   input: { activePointers: 2 },
-  scene: [BootScene, SkyMapScene, ScanScene, SortScene],
+  scene: [BootScene, SkyMapScene, ScanScene, SortScene, RegistryScene, ResultScene, CreditsScene],
 });
 
 // 세로 화면이면 덮개를 보이고 게임을 멈춘다. 상태가 바뀔 때만 멈추거나 다시 움직인다.

@@ -75,3 +75,84 @@ export const SCAN_TEXT = {
 
 // 쉬운 말 의뢰 문장에서 "…것"까지만 떼어 여러 대상을 한 줄로 보여 줄 때 쓴다.
 export const plainLook = (sentence) => sentence.replace(/을 찾아 주세요\.$/, '');
+
+// 천 단위마다 쉼표(기기 언어 설정과 상관없이 같게).
+export const formatNumber = (n) => {
+  const s = String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return n < 0 ? `-${s}` : s;
+};
+
+// 다섯 종류 이름과 교과서 설명 한 줄(설계 문서 4.7). 도감 등록 화면에서 처음 보인다.
+export const TYPE_INFO = {
+  emission: { nameKo: '방출 성운', line: '주변의 별빛을 흡수해 가열되면서 스스로 빛을 내는 성운' },
+  reflection: { nameKo: '반사 성운', line: '주변의 별빛을 반사하여 밝게 보이는 성운' },
+  dark: { nameKo: '암흑 성운', line: '뒤쪽에서 오는 별빛을 가로막아 어둡게 보이는 성운' },
+  open: { nameKo: '산개 성단', line: '수십~수만 개의 별이 일정한 모양 없이 엉성하게 모여 있는 성단' },
+  globular: { nameKo: '구상 성단', line: '수만~수십만 개의 별이 공 모양으로 빽빽하게 모여 있는 성단' },
+};
+
+// 묶기 화면에서 단계와 상관없이 보이는 글. "성운", "성단"과 다섯 종류 이름을 쓰지 않는다.
+export const SORT_TEXT = {
+  judge: '판정',
+  incomplete: '아직 놓지 않은 카드가 있어요',
+  correct: '맞았어요!',
+  close: '닫기',
+  putIn: (label) => `${label}에 넣기`,
+  takeOut: '카드 줄로 빼기',
+  binCount: (n) => `${n}장`,
+};
+
+// 묶기 단계별 글. shape에는 "성운", "성단"을 쓰지 않고, 어느 단계에도 다섯 종류 이름을 쓰지 않는다.
+export const SORT_STAGE_TEXT = {
+  shape: {
+    intro: '생김새가 비슷한 카드끼리 두 묶음으로 나눠 보세요. 카드를 위로 끌어 올리거나 눌러서 크게 볼 수 있어요.',
+  },
+  nebula: {
+    reveal: '구름 같은 것은 성운, 별 무리는 성단이라고 불러요.',
+    revealNext: '성운부터 나누기',
+    intro: '이번에는 성운 카드만 두 묶음으로 나눠 보세요.',
+  },
+  cluster: {
+    intro: '이번에는 성단 카드만 두 묶음으로 나눠 보세요.',
+    done: '묶기를 모두 마쳤어요! 이제 카드를 도감에 등록해요.',
+    toRegistry: '도감 등록',
+  },
+};
+
+export const REGISTRY_TEXT = {
+  progress: (i, n) => `도감 등록 ${i} / ${n}`,
+  next: '다음 카드',
+  skipAll: '모두 넘기기',
+  tapHint: '화면을 눌러도 다음 카드로 넘어가요.',
+  toZones: '별자리별로 보기',
+  constellation: (name) => `별자리: ${name}`,
+  lightYears: (ly) => `${formatNumber(ly)} 광년`,
+  distance: (ly) => `지구에서의 거리: 약 ${formatNumber(ly)} 광년`,
+  glow: { emission: '스스로 빛을 낸다', reflection: '별빛을 반사한다' },
+  zonesTitle: '별자리별로 모아 보기',
+  zonesLine: '같은 별자리 방향에 보여도 거리는 서로 달라요',
+  toResult: '결과 보기',
+};
+
+export const RESULT_TEXT = {
+  title: '관측 결과',
+  total: '총점',
+  points: (n) => `${formatNumber(n)}점`,
+  found: (n) => `카드 발견 ${n}장`,
+  stage: { shape: '1차 묶기 (구름 같은 것 / 별 무리)', nebula: '2차 묶기 (성운)', cluster: '2차 묶기 (성단)' },
+  stageDetail: (hint, wrong) => `힌트 ${hint}단계 · 틀린 판정 ${wrong}번`,
+  allTypes: '다섯 종류 모두 등록',
+  full: '20장 완성',
+  credits: '사진 출처',
+  restart: '처음부터 다시',
+  restartConfirm: '한 번 더 누르면 처음부터',
+};
+
+export const CREDITS_TEXT = {
+  title: '사진 출처',
+  edited: '사진 크기를 줄여 사용함',
+  scroll: '위아래로 끌어 넘겨 보세요.',
+  credit: (c) => `사진: ${c}`,
+  license: (l) => `라이선스: ${l}`,
+  back: '돌아가기',
+};

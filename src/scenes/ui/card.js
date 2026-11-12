@@ -27,3 +27,29 @@ export function makeCard(scene, x, y, { id, height = 460, label = '' } = {}) {
   c.setSize(CARD_W * s, CARD_H * s);
   return c;
 }
+
+// 카드 뒷면(card-back-unknown.png). 도감 등록에서 뒤집기 전 모습.
+export function makeCardBack(scene, x, y, { height = 460 } = {}) {
+  const s = height / CARD_H;
+  const c = scene.add.container(x, y);
+  c.add(scene.add.image(0, 0, 'card-back-unknown').setScale(s));
+  c.setSize(CARD_W * s, CARD_H * s);
+  return c;
+}
+
+// 카드 둘레를 반짝이는 선으로 짚는다(힌트 2단계부터 어긋난 카드). 카드와 함께 움직이고 커지고 작아진다.
+export function setCardGlow(scene, card, on) {
+  if (!card.glow && !on) return;
+  if (!card.glow) {
+    const w = card.width;
+    const h = card.height;
+    const g = scene.add.graphics();
+    const t = Math.max(6, w * 0.06);
+    g.lineStyle(t, 0xffe08a, 1);
+    g.strokeRoundedRect(-w / 2 - t / 2, -h / 2 - t / 2, w + t, h + t, w * 0.08);
+    card.add(g);
+    card.glow = g;
+    scene.tweens.add({ targets: g, alpha: 0.15, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+  }
+  card.glow.setVisible(on);
+}

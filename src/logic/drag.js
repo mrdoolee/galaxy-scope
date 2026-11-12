@@ -44,6 +44,19 @@ export function createDrag() {
   };
 }
 
+// 누른 손가락이 threshold 넘게 움직였을 때 무엇을 할지 정한다(한 손가락으로 줄 넘기기와 카드 들기를 가른다).
+//   canLift: 누른 곳에 들 수 있는 카드가 있다. canScroll: 누른 곳이 옆으로 넘기는 줄이다.
+//   둘 다면 세로로 끌면 'lift', 가로로 끌면 'scroll'. 아직 덜 움직였으면 null(누르기일 수 있다).
+export const GESTURE_THRESHOLD = 12;
+
+export function gestureKind(dx, dy, { canLift = false, canScroll = false, threshold = GESTURE_THRESHOLD } = {}) {
+  if (Math.hypot(dx, dy) < threshold) return null;
+  if (canLift && canScroll) return Math.abs(dy) >= Math.abs(dx) ? 'lift' : 'scroll';
+  if (canLift) return 'lift';
+  if (canScroll) return 'scroll';
+  return null;
+}
+
 // 끄는 속도(px/초). 화면 프레임이 아니라 손가락 움직임 신호 사이의 시간으로 잰다.
 // 기기마다 움직임 신호가 프레임보다 띄엄띄엄 올 수 있는데, 프레임으로 재면 신호가 없는 프레임마다
 // 속도가 0 쪽으로 출렁여 빠르게 휘두르는 중에도 얼룩이 언뜻 보이게 된다.

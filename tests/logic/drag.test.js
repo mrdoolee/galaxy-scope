@@ -1,4 +1,4 @@
-import { createDrag, createSpeedMeter, dragStep } from '../../src/logic/drag.js';
+import { createDrag, createSpeedMeter, dragStep, gestureKind } from '../../src/logic/drag.js';
 import { SMUDGE_SPEED, BLUR_SPEED } from '../../src/config/balance.js';
 
 describe('createDrag', () => {
@@ -108,5 +108,24 @@ describe('dragStep', () => {
     }
     expect(m.read(t)).toBeGreaterThan(SMUDGE_SPEED);
     expect(m.read(t)).toBeGreaterThan(BLUR_SPEED);
+  });
+});
+
+describe('gestureKind', () => {
+  it('조금 움직인 것은 아직 정하지 않는다(누르기일 수 있다)', () => {
+    expect(gestureKind(5, -6, { canLift: true, canScroll: true })).toBeNull();
+  });
+  it('카드 줄의 카드: 세로로 끌면 들어 올리고, 가로로 끌면 줄을 넘긴다', () => {
+    expect(gestureKind(4, -30, { canLift: true, canScroll: true })).toBe('lift');
+    expect(gestureKind(-30, 8, { canLift: true, canScroll: true })).toBe('scroll');
+    expect(gestureKind(20, 20.5, { canLift: true, canScroll: true })).toBe('lift');
+  });
+  it('카드 줄 빈 곳은 넘기기만, 묶음 칸의 카드는 들어 올리기만', () => {
+    expect(gestureKind(4, -30, { canLift: false, canScroll: true })).toBe('scroll');
+    expect(gestureKind(-30, 0, { canLift: true, canScroll: false })).toBe('lift');
+    expect(gestureKind(-30, 0, { canLift: false, canScroll: false })).toBeNull();
+  });
+  it('기준 거리를 바꿀 수 있다', () => {
+    expect(gestureKind(0, -15, { canLift: true, canScroll: true, threshold: 20 })).toBeNull();
   });
 });
