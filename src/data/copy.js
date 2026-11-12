@@ -83,9 +83,16 @@ export const SCAN_TEXT = {
   sharp: '초점이 맞았어요! 촬영 버튼을 누르세요.',
 };
 
+// 몇째 밤인지: 1~10은 우리말 서수(첫째~열째), 11부터는 "n번째". 0 이하나 숫자가 아니면 "첫째".
+const ORDINALS = ['첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째', '여덟째', '아홉째', '열째'];
+export function nightOrdinal(n) {
+  const k = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+  return k <= ORDINALS.length ? ORDINALS[k - 1] : `${k}번째`;
+}
+
 // 밤 시계, 해돋이, 임무 완료(훑기 화면). 묶기 전이므로 분류 용어를 쓰지 않는다.
 export const NIGHT_TEXT = {
-  nightLabel: (n) => `${n}째 밤`,
+  nightLabel: (n) => `${nightOrdinal(n)} 밤`,
   dawn: '해가 떴어요. 낮에는 천체를 관측할 수 없어요. 밤이 될 때까지 기다려야 해요.',
   dusk: '다시 밤이 되었어요. 이어서 찾아봐요.',
   tonight: (k) => `오늘 밤 찍은 카드 ${k}장`,

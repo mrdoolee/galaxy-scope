@@ -3,7 +3,7 @@ import { newGame, save, load, SAVE_KEY } from '../../src/logic/save.js';
 import { assignMission, tickNight, isDawn, endDay, completeMission, resumeNight, nightLength } from '../../src/logic/night.js';
 import { recordCapture } from '../../src/logic/capture.js';
 import { refreshRequest, bootState, DECK_IDS } from '../../src/scenes/gameState.js';
-import { NIGHT_TEXT, RATING_TEXT, ratingLine } from '../../src/data/copy.js';
+import { NIGHT_TEXT, RATING_TEXT, ratingLine, nightOrdinal } from '../../src/data/copy.js';
 import { SCORE } from '../../src/config/balance.js';
 
 const BANNED = ['성운', '성단', '방출', '반사', '암흑', '산개', '구상', '은하'];
@@ -172,7 +172,9 @@ describe('밤 글', () => {
   ];
 
   it('정해진 문장을 그대로 쓴다', () => {
-    expect(NIGHT_TEXT.nightLabel(2)).toBe('2째 밤');
+    expect(NIGHT_TEXT.nightLabel(1)).toBe('첫째 밤');
+    expect(NIGHT_TEXT.nightLabel(2)).toBe('둘째 밤');
+    expect(NIGHT_TEXT.nightLabel(11)).toBe('11번째 밤');
     expect(NIGHT_TEXT.dawn).toBe('해가 떴어요. 낮에는 천체를 관측할 수 없어요. 밤이 될 때까지 기다려야 해요.');
     expect(NIGHT_TEXT.dusk).toBe('다시 밤이 되었어요. 이어서 찾아봐요.');
     expect(NIGHT_TEXT.tonight(3)).toBe('오늘 밤 찍은 카드 3장');
@@ -181,6 +183,20 @@ describe('밤 글', () => {
     expect(NIGHT_TEXT.toNextMission).toBe('다음 임무 받기');
     expect(NIGHT_TEXT.shutter).toBe('촬영');
     expect(NIGHT_TEXT.earlyBonus(50)).toContain('50');
+  });
+
+  it('몇째 밤인지는 우리말 서수로 쓴다(1~10은 첫째~열째, 그 뒤는 n번째, 이상한 값은 첫째)', () => {
+    expect(nightOrdinal(1)).toBe('첫째');
+    expect(nightOrdinal(2)).toBe('둘째');
+    expect(nightOrdinal(3)).toBe('셋째');
+    expect(nightOrdinal(10)).toBe('열째');
+    expect(nightOrdinal(11)).toBe('11번째');
+    expect(nightOrdinal(0)).toBe('첫째');
+    expect(nightOrdinal(-2)).toBe('첫째');
+    expect(nightOrdinal(NaN)).toBe('첫째');
+    expect(nightOrdinal(Infinity)).toBe('첫째');
+    expect(Array.from({ length: 10 }, (_, i) => nightOrdinal(i + 1)).join(' '))
+      .toBe('첫째 둘째 셋째 넷째 다섯째 여섯째 일곱째 여덟째 아홉째 열째');
   });
 
   it('모든 문장에 분류 용어가 없다', () => {

@@ -73,6 +73,12 @@ export function nightTotal(state, foundIds) {
   return Math.max(base, state.nightLeftMs ?? 0);
 }
 
+// 지금 밤 시계가 가야 하는가: 모으기 단계, 보너스 관측이 아님, 훑기나 초점 상태, 임무가 있음, 낮 기다림 중이 아님.
+// (카드 화면·낮·보너스에서는 멈춘다. 임무 구역이 아닌 구역을 훑어도 간다.)
+export function clockRuns({ phase, bonus, mode, hasMission, dayWait }) {
+  return phase === 'collect' && !bonus && (mode === 'sweep' || mode === 'focus') && hasMission && !dayWait;
+}
+
 // 낮 기다림의 흐름(경과 시간 → 보이는 모습). 하늘이 DAY_FADE_MS 동안 밝아지고(light 0→1), 해가 DAY_WAIT_MS 동안
 // 지나가며(sun 0→1), 그 뒤 DAY_FADE_MS 동안 어두워지고 DUSK_HOLD_MS만큼 "다시 밤" 말을 보여 준 뒤 끝난다.
 export function dayTimeline(elapsedMs) {

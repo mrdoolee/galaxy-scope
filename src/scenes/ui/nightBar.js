@@ -29,14 +29,23 @@ export function makeNightBar(scene, x, y, width) {
   const fill = scene.add.graphics();
   c.add([plate, label, track, fill, moon, sun]);
 
+  // 매 프레임 불려도 보이는 값(밤 번호, 채움 너비 px, 색)이 바뀔 때만 다시 그린다.
+  let shownNight = null;
+  let shownFill = null;
   return {
     container: c,
     set(leftMs, totalMs, nightNo) {
+      if (nightNo !== shownNight) {
+        shownNight = nightNo;
+        label.setText(NIGHT_TEXT.nightLabel(nightNo));
+      }
       const k = totalMs > 0 ? Math.min(1, Math.max(0, leftMs / totalMs)) : 0;
-      label.setText(NIGHT_TEXT.nightLabel(nightNo));
+      const w = k <= 0 ? 0 : Math.round(Math.max(BAR_H, (x1 - x0) * k));
+      const key = `${w}|${k < LOW}`;
+      if (key === shownFill) return;
+      shownFill = key;
       fill.clear();
-      if (k <= 0) return;
-      const w = Math.max(BAR_H, (x1 - x0) * k);
+      if (w === 0) return;
       fill.fillStyle(k < LOW ? 0xffa65c : COLOR.brassLight, 1);
       fill.fillRoundedRect(x1 - w, rowY - BAR_H / 2 + 2, w, BAR_H - 4, (BAR_H - 4) / 2);
     },

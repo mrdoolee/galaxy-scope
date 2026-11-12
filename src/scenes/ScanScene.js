@@ -10,7 +10,7 @@ import { viewState, visibleSmudges, lockTarget, isSharp, focusError, nudgeDirect
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
-import { tickNight, isDawn, endDay, nightTotal } from '../logic/night.js';
+import { tickNight, isDawn, endDay, nightTotal, clockRuns } from '../logic/night.js';
 import { captureRating } from '../logic/rating.js';
 import { recordCapture } from '../logic/capture.js';
 import { DECK, DECK_IDS, DECK_SIZE, getState, persist, commit, stash, refreshRequest } from './gameState.js';
@@ -70,6 +70,8 @@ export default class ScanScene extends Phaser.Scene {
     this.speed = 0;
     this.mode = 'sweep'; // sweep | focus | card | day
     this.idleMs = 0;
+    this.dayWait = false; // 낮 기다림이 도는 중
+    this.nightTotalMs = undefined; // 시간 막대의 분모(showNight(true)에서 센다)
     this.sinceSave = 0;   // 밤 시계를 마지막으로 기기에 저장한 뒤 지난 시간
     this.tonightIds = []; // 이 밤에 찍은 카드(낮 기다림에 보여 준다. 새로 고침하면 비어도 된다)
     this.moved = false;
@@ -83,7 +85,7 @@ export default class ScanScene extends Phaser.Scene {
     this.buildHud();
     this.bindInput();
     this.refreshPanel();
-    this.showNight();
+    this.showNight(true);
   }
 
   // ── 구역 하늘: 시드 난수로 찍은 별 + 별자리(선, 밝은 별, 길잡이 이름표) + 천체 자리의 흐린 얼룩
@@ -271,7 +273,7 @@ export default class ScanScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
-    if (this.mode === 'sweep' || this.mode === 'focus') this.tickClock(delta);
+    this.tickClock(delta);
     if (this.mode === 'sweep') this.updateSweep(delta);
     else if (this.mode === 'focus') this.updateFocus();
   }
@@ -280,7 +282,8 @@ export default class ScanScene extends Phaser.Scene {
   // 임무 구역이 아니어도 간다(어느 구역을 보든 밤은 지나간다). 매 프레임 registry에 두고 NIGHT_SAVE_MS마다 기기에 저장한다.
   tickClock(delta) {
     const state = getState(this);
-    if (this.bonus || state.phase !== 'collect' || !state.mission) return;
+    const gate = { phase: state.phase, bonus: this.bonus, mode: this.mode, hasMission: !!state.mission, dayWait: this.dayWait };
+    if (!clockRuns(gate)) return;
     const next = stash(this, tickNight(state, delta));
     this.sinceSave += delta;
     if (this.sinceSave >= NIGHT_SAVE_MS) {
@@ -292,21 +295,33 @@ export default class ScanScene extends Phaser.Scene {
     if (this.mode === 'sweep' && isDawn(next)) this.startDay();
   }
 
-  showNight() {
+  // 시간 막대. 밤 길이(분모)는 임무·찾은 것·밤이 바뀔 때만(recount) 다시 센다. 막대는 보이는 값이 바뀔 때만 다시 그린다.
+  showNight(recount = false) {
     const state = getState(this);
     const on = !this.bonus && !!state.mission;
-    this.nightBar.container.setVisible(on);
-    if (on) this.nightBar.set(state.nightLeftMs, nightTotal(state, this.found), state.night);
+    if (this.nightBar.container.visible !== on) this.nightBar.container.setVisible(on);
+    if (!on) return;
+    if (recount || this.nightTotalMs === undefined) this.nightTotalMs = nightTotal(state, this.found);
+    this.nightBar.set(state.nightLeftMs, this.nightTotalMs, state.night);
+  }
+
+  // 낮 동안 숨기는 버튼(요원 말풍선 아래로 비치지 않게, 누를 것이 없게): 지도로, 확대, 왼쪽 판의 다음.
+  hideForDay(hidden) {
+    this.backBtn.container.setVisible(!hidden);
+    this.zoomBtn.container.setVisible(!hidden);
+    this.targetPanel.holdNav(hidden);
   }
 
   // ── 해돋이: 해가 뜬 순간(남은 밤 0)을 저장하고 낮 기다림. 새로 고침하면 불러올 때 resumeNight가 다음 밤으로 넘긴다.
   startDay() {
     this.mode = 'day';
+    this.dayWait = true;
     this.stopDrag();
     persist(this);
     this.sinceSave = 0;
     this.backBtn.setEnabled(false);
     this.zoomBtn.setEnabled(false);
+    this.hideForDay(true);
     this.nudge.setVisible(false);
     if (this.blurFx) this.blurFx.active = false;
     this.status.setText('');
@@ -324,9 +339,11 @@ export default class ScanScene extends Phaser.Scene {
     this.tonightIds = [];
     this.stopDrag();
     this.mode = 'sweep';
+    this.dayWait = false;
     this.backBtn.setEnabled(true);
+    this.hideForDay(false);
     this.lockId = undefined; // 다음 프레임에 확대 버튼과 조준 원을 다시 그린다
-    this.showNight();
+    this.showNight(true);
   }
 
   updateSweep(delta) {
@@ -443,7 +460,7 @@ export default class ScanScene extends Phaser.Scene {
     this.status.setText(SCAN_TEXT.got);
     this.idleMs = 0;
     this.refreshPanel(); // 임무를 마쳤으면 여기서 다음 임무가 정해진다(완료는 위에서 이미 반영해 두 번 세지 않는다)
-    this.showNight();
+    this.showNight(true);
     this.tweens.add({ targets: this.sharp, alpha: 1, duration: 250 });
     this.time.delayedCall(650, () => this.showCard(id, rating, result));
   }

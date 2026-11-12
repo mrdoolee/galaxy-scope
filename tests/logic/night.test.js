@@ -1,7 +1,7 @@
 import { newGame } from '../../src/logic/save.js';
 import {
   nightLength, assignMission, tickNight, isDawn, endDay, missionDone, completeMission, resumeNight, settleMission,
-  nightTotal, dayTimeline,
+  nightTotal, dayTimeline, clockRuns,
 } from '../../src/logic/night.js';
 import { DAY_WAIT_MS, DAY_FADE_MS, DUSK_HOLD_MS } from '../../src/config/balance.js';
 
@@ -148,6 +148,28 @@ describe('nightTotal', () => {
   });
   it('임무가 없으면 0', () => {
     expect(nightTotal(newGame(1), new Set())).toBe(0);
+  });
+});
+
+describe('clockRuns', () => {
+  const on = { phase: 'collect', bonus: false, mode: 'sweep', hasMission: true, dayWait: false };
+  it('모으기 중 임무가 있고 훑기나 초점 상태일 때만 간다', () => {
+    expect(clockRuns(on)).toBe(true);
+    expect(clockRuns({ ...on, mode: 'focus' })).toBe(true);
+  });
+  it.each([
+    ['카드 화면', { mode: 'card' }],
+    ['낮 상태', { mode: 'day' }],
+    ['낮 기다림 중', { dayWait: true }],
+    ['초점 상태로 남은 낮 기다림 중', { mode: 'focus', dayWait: true }],
+    ['보너스 관측', { bonus: true }],
+    ['보너스 관측(결과 단계)', { bonus: true, phase: 'result' }],
+    ['묶기 단계', { phase: 'sort' }],
+    ['도감 단계', { phase: 'registry' }],
+    ['결과 단계', { phase: 'result' }],
+    ['임무 없음', { hasMission: false }],
+  ])('%s에는 가지 않는다', (_name, patch) => {
+    expect(clockRuns({ ...on, ...patch })).toBe(false);
   });
 });
 

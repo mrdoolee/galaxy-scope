@@ -28,6 +28,7 @@ const BOTTOM = GAME_HEIGHT - 8;
  *                       보던 대상이 남아 있으면 그대로, 찾아서 빠졌으면 다음 대상, 새 임무면 첫 대상을 보여 준다.
  *   note(text)          대상 대신 흐린 글 한 줄(예: 의뢰 구역이 다른 곳일 때)
  *   currentId           지금 보여 주는 대상(없으면 null)
+ *   holdNav(on)         넘김 줄을 잠시 숨긴다(낮 기다림). false면 대상 수에 맞게 되돌린다
  *   container           판 전체(판 그림, 내용, 넘김 줄)
  *   destroy()
  */
@@ -54,6 +55,8 @@ export function makeTargetPanel(scene, x, y, width) {
   let targets = [];
   let kind = null;
   let index = 0;
+  let navHeld = false; // 낮 기다림 동안 넘김 줄을 숨긴다
+  const showNav = () => nav.setVisible(targets.length > 1 && !navHeld);
 
   const text = (cy, str, opts) => addText(scene, x, cy, str, { size: MIN_FONT, wrap, align: 'center', origin: [0.5, 0], ...opts });
 
@@ -62,7 +65,7 @@ export function makeTargetPanel(scene, x, y, width) {
     if (targets.length === 0) {
       api.currentId = null;
       setPlate(0);
-      nav.setVisible(false);
+      showNav();
       return;
     }
     index = ((i % targets.length) + targets.length) % targets.length;
@@ -99,7 +102,7 @@ export function makeTargetPanel(scene, x, y, width) {
 
     // 대상이 하나면 판을 글 길이에 맞추고, 여럿이면 아래쪽 넘김 버튼까지 덮는다.
     setPlate(many ? BOTTOM - y : cy + PAD - y);
-    nav.setVisible(many);
+    showNav();
     counter.setText(SCAN_TEXT.targetIndex(index + 1, targets.length));
   }
 
@@ -120,6 +123,10 @@ export function makeTargetPanel(scene, x, y, width) {
       targets = [];
       show(0);
       content.add(text(y + 20, str, { color: COLOR.textDim }));
+    },
+    holdNav(on) {
+      navHeld = on;
+      showNav();
     },
     destroy() {
       root.destroy();
