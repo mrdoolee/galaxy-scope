@@ -2,6 +2,7 @@ import { MAP_TEXT, SCAN_TEXT, BOOT_TEXT, PLAIN_REQUEST, PHOTO_ATTRIBUTION } from
 import { ZONES } from '../../src/data/zones.js';
 import { OBJECTS } from '../../src/data/objects.js';
 import { photoAgencies, photoLicenses } from '../../src/logic/credits.js';
+import { miniFigure } from '../../src/logic/chart.js';
 
 // 묶기 전에는 학생이 아직 분류하지 않았으므로 용어가 화면에 나오면 안 된다.
 const BANNED = ['성운', '성단', '방출', '반사', '암흑', '산개', '구상', '은하'];
@@ -20,17 +21,22 @@ test('구역 이름에도 분류 용어가 없다', () => {
   for (const z of ZONES) for (const w of BANNED) expect(z.nameKo).not.toContain(w);
 });
 
-test('구역마다 별자리 선이 있고, 선은 별 번호를 가리키며 표시 칸 근처에 머문다', () => {
+// 하늘 지도의 작은 별자리 그림(SkyMapScene이 miniFigure(zone.id, 44)로 그린다)은 88×88 터치 대상 안에 머물고,
+// 표시 아래 4px 띄운 이름표(가운데가 표시 가운데에서 60px 아래, 24px 글씨)에 닿지 않는다.
+test('구역마다 작은 별자리 그림이 있고, 선은 별 번호를 가리키며 터치 대상 안, 이름표 위에 머문다', () => {
+  const TARGET_HALF = 44, LABEL_TOP = 44 + 4;
   for (const z of ZONES) {
-    expect(z.lines.stars.length).toBeGreaterThanOrEqual(2); // 사냥개자리는 실제로 별 둘
-    expect(z.lines.segs.length).toBeGreaterThanOrEqual(1);
-    for (const [dx, dy] of z.lines.stars) {
-      expect(Math.abs(dx)).toBeLessThanOrEqual(48);
-      expect(Math.abs(dy)).toBeLessThanOrEqual(42);
+    const { stars, segs } = miniFigure(z.id, 44);
+    expect(stars.length).toBeGreaterThanOrEqual(2); // 사냥개자리는 실제로 밝은 별 둘
+    expect(segs.length).toBeGreaterThanOrEqual(1);
+    for (const [dx, dy] of stars) {
+      expect(Math.abs(dx)).toBeLessThanOrEqual(TARGET_HALF + 1e-9);
+      expect(Math.abs(dy)).toBeLessThanOrEqual(TARGET_HALF + 1e-9);
+      expect(dy).toBeLessThan(LABEL_TOP);
     }
-    for (const [i, j] of z.lines.segs) {
-      expect(z.lines.stars[i]).toBeDefined();
-      expect(z.lines.stars[j]).toBeDefined();
+    for (const [i, j] of segs) {
+      expect(stars[i]).toBeDefined();
+      expect(stars[j]).toBeDefined();
     }
   }
 });

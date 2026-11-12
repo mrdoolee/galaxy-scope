@@ -4,6 +4,7 @@ import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
 import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT } from '../data/copy.js';
 import { mapZoneIds } from '../logic/layout.js';
+import { miniFigure } from '../logic/chart.js';
 import { openZones } from '../logic/requests.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
 import { DECK, DECK_SIZE, getState, refreshRequest, skyMapRedirect } from './gameState.js';
@@ -17,6 +18,7 @@ import { showToast } from './ui/toast.js';
 
 const HEADER_H = 106;
 const LABEL_DY = 60; // 표시 가운데에서 이름표 가운데까지(터치 대상 아래 4px 띄우고 24px 높이)
+const FIGURE_R = 44; // 작은 별자리 그림의 반지름: 88×88 터치 대상 안에 들어오고 이름표에 닿지 않는다
 
 export default class SkyMapScene extends Phaser.Scene {
   constructor() {
@@ -114,7 +116,7 @@ export default class SkyMapScene extends Phaser.Scene {
     const on = status === 'open';
     const lineColor = on ? COLOR.brassLight : 0x8090b0;
     const alpha = on ? 0.95 : status === 'done' ? 0.5 : 0.28;
-    const { stars, segs } = zone.lines;
+    const { stars, segs } = miniFigure(zone.id, FIGURE_R);
     g.lineStyle(on ? 2.5 : 2, lineColor, alpha * 0.8);
     for (const [i, j] of segs) g.lineBetween(x + stars[i][0], y + stars[i][1], x + stars[j][0], y + stars[j][1]);
     g.fillStyle(0xffffff, alpha);

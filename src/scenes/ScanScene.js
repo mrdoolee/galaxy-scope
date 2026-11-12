@@ -4,7 +4,7 @@ import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDL
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
 import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, TYPE_INFO, REGISTRY_TEXT } from '../data/copy.js';
-import { zoneLayout, zoneLayoutWithBonus } from '../logic/layout.js';
+import { chartLayout } from '../logic/chart.js';
 import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur } from '../logic/scan.js';
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
@@ -53,9 +53,8 @@ export default class ScanScene extends Phaser.Scene {
     this.found = new Set(state.foundIds);
     this.bonus = inBonus(state);
     this.pool = this.bonus ? OBJECTS : DECK; // 보너스 관측에서는 필수·보너스 천체를 모두 놓는다(찾은 것은 얼룩으로 보이지 않는다)
-    this.placed = this.bonus
-      ? zoneLayoutWithBonus(state.seed, this.zoneId, DECK, OBJECTS.filter((o) => !o.deck))
-      : zoneLayout(state.seed, this.zoneId, DECK);
+    // 실제 하늘 자리를 따른 배치(판마다 같다). 보너스 천체를 더해도 필수 카드 자리는 그대로다.
+    this.placed = chartLayout(this.zoneId, DECK, this.bonus ? OBJECTS.filter((o) => !o.deck) : []);
     this.view = { x: ZONE_W / 2, y: ZONE_H / 2 };
     this.speed = 0;
     this.mode = 'sweep'; // sweep | focus | card

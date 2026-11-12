@@ -21,9 +21,23 @@ function hubble(id, credit) {
 
 const GROUP_OF = { emission: 'nebula', reflection: 'nebula', dark: 'nebula', open: 'cluster', globular: 'cluster', spiral: 'galaxy' };
 
+// 하늘 자리(J2000): [적경(시, 소수), 적위(도, 소수)]. 구역 하늘에서 천체를 놓는 기준이다(src/logic/chart.js).
+// 파이프 성운은 여러 암흑 성운이 이어진 것이라 B59 하나가 아니라 무리 전체의 가운데쯤을 적는다.
+const RADEC = {
+  m42: [5.588, -5.39], m8: [18.060, -24.38], m17: [18.346, -16.18], m16: [18.313, -13.78],
+  m78: [5.779, 0.08], ic2118: [5.080, -7.20], ic2631: [11.160, -76.60], ngc7023: [21.030, 68.17],
+  b33: [5.683, -2.46], b68: [17.378, -23.83], b59: [17.350, -27.00], b86: [18.050, -27.87],
+  m45: [3.790, 24.12], m7: [17.898, -34.79], ngc869: [2.330, 57.13], ngc2547: [8.170, -49.20],
+  m4: [16.393, -26.53], m22: [18.607, -23.90], ngc5139: [13.446, -47.48], m13: [16.695, 36.46],
+  ngc3372: [10.750, -59.87], m20: [18.040, -23.03], ngc6726: [19.030, -36.90], ldn1622: [5.910, 1.80],
+  m11: [18.851, -6.27], ngc3532: [11.090, -58.70], ngc104: [0.401, -72.08], m55: [19.667, -30.96],
+  m51: [13.498, 47.20], m101: [14.054, 54.35], m104: [12.666, -11.62],
+};
+
 function obj(id, nameKo, catalogId, type, zone, distanceLy, deck, composite, source) {
+  const [ra, dec] = RADEC[id];
   return {
-    id, nameKo, catalogId, group: GROUP_OF[type], type, zone, distanceLy, deck, composite,
+    id, nameKo, catalogId, group: GROUP_OF[type], type, zone, ra, dec, distanceLy, deck, composite,
     photo: { file: `photos/${id}.jpg`, ...source, license: LICENSE, licenseUrl: LICENSE_URL, edited: true, checkedOn: CHECKED_ON },
   };
 }
