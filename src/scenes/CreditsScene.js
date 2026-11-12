@@ -59,7 +59,7 @@ export default class CreditsScene extends Phaser.Scene {
     addPlate(this, 8, 8, 1000, HEADER_H - 16, 0.95).setDepth(10);
     addText(this, 32, 38, CREDITS_TEXT.title, { size: 32, bold: true, origin: [0, 0.5] }).setDepth(10);
     addText(this, 32, 80, CREDITS_TEXT.edited, { size: 26, color: COLOR.textBrass, origin: [0, 0.5] }).setDepth(10);
-    addText(this, 560, 58, CREDITS_TEXT.scroll, { size: 24, color: COLOR.textDim, origin: [0, 0.5] }).setDepth(10);
+    addText(this, 640, 58, CREDITS_TEXT.scroll, { size: 24, color: COLOR.textDim, origin: [0, 0.5] }).setDepth(10);
     makeButton(this, 1142, 58, { w: 252, h: 96, label: CREDITS_TEXT.back, size: 30, onTap: () => this.scene.start(this.from) }).container.setDepth(10);
   }
 

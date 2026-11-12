@@ -140,6 +140,9 @@ export default class RegistryScene extends Phaser.Scene {
     // 카드 크기는 모든 칸에 같게: 가장 많은 칸의 한 장 자리(카드 너비 = 높이 × 2/3)와 칸 높이에 맞춘다.
     const most = Math.max(...groups.map((g) => g.cards.length));
     const cardH = Math.floor(Math.min(rows === 1 ? 260 : 140, (((pw - 24) / most) - 16) * 1.5));
+    // 카드, 이름(두 줄까지), 거리를 한 덩어리로 칸 안 남는 높이의 가운데에 놓는다.
+    const blockH = cardH + 156;
+    const dy = 56 + Math.max(0, (ph - 56 - blockH) / 2);
     groups.forEach((g, i) => {
       const px = 8 + (i % cols) * (pw + 16);
       const py = top + Math.floor(i / cols) * (ph + 8);
@@ -148,9 +151,9 @@ export default class RegistryScene extends Phaser.Scene {
       const slot = (pw - 24) / g.cards.length;
       g.cards.forEach((o, j) => {
         const cx = px + 12 + slot * (j + 0.5);
-        this.page.add(makeCard(this, cx, py + 56 + cardH / 2, { id: o.id, height: cardH }));
-        this.page.add(addText(this, cx, py + 64 + cardH, o.nameKo, { size: 24, wrap: slot - 10, align: 'center', origin: [0.5, 0] }));
-        this.page.add(addText(this, cx, py + 136 + cardH, REGISTRY_TEXT.lightYears(o.distanceLy), { size: 26, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
+        this.page.add(makeCard(this, cx, py + dy + cardH / 2, { id: o.id, height: cardH }));
+        this.page.add(addText(this, cx, py + dy + 8 + cardH, o.nameKo, { size: 24, wrap: slot - 10, align: 'center', origin: [0.5, 0] }));
+        this.page.add(addText(this, cx, py + dy + 80 + cardH, REGISTRY_TEXT.lightYears(o.distanceLy), { size: 26, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
       });
     });
   }
