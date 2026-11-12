@@ -1,7 +1,7 @@
-import { DIRECTIONS, guideFor, zoneClues } from '../../src/logic/guide.js';
+import { DIRECTIONS, guideFor, zoneClues, startGuide } from '../../src/logic/guide.js';
 import { chartLayout, chartGuides } from '../../src/logic/chart.js';
 import { GUIDE_TEXT, DIR_KO, withRo } from '../../src/data/copy.js';
-import { GUIDE_NEAR, GUIDE_MID } from '../../src/config/balance.js';
+import { GUIDE_NEAR, GUIDE_MID, VIEW_RADIUS } from '../../src/config/balance.js';
 import { ZONES } from '../../src/data/zones.js';
 import { OBJECTS } from '../../src/data/objects.js';
 
@@ -69,6 +69,39 @@ describe('zoneClues', () => {
         expect(GUIDE_TEXT(c)).not.toMatch(/성운|성단|방출|반사|암흑|산개|구상/);
       }
     }
+  });
+});
+
+describe('startGuide', () => {
+  const minDist = (g, pts) => Math.min(...pts.map((p) => Math.hypot(p.x - g.x, p.y - g.y)));
+
+  it('못 찾은 천체 모두에서 가장 먼(가장 가까운 천체까지가 가장 먼) 길잡이를 고른다', () => {
+    const a = { nameKo: 'A', x: 100, y: 100 }, b = { nameKo: 'B', x: 1000, y: 100 }, c = { nameKo: 'C', x: 2000, y: 100 };
+    const placed = [{ id: 'p', x: 150, y: 100 }, { id: 'q', x: 1900, y: 100 }];
+    expect(startGuide([a, b, c], placed, new Set())).toBe(b);
+    // q를 찾으면 q는 따지지 않는다: p에서 가장 먼 C
+    expect(startGuide([a, b, c], placed, new Set(['q']))).toBe(c);
+  });
+
+  it('다 찾았으면 첫 길잡이, 길잡이가 없으면 null', () => {
+    const a = { nameKo: 'A', x: 1, y: 1 }, b = { nameKo: 'B', x: 2, y: 2 };
+    expect(startGuide([a, b], [{ id: 'p', x: 0, y: 0 }], new Set(['p']))).toBe(a);
+    expect(startGuide([], [{ id: 'p', x: 0, y: 0 }], new Set())).toBeNull();
+  });
+
+  it('모든 구역에서 고른 길잡이가 최선이고, 오리온자리에서는 시작 시야에 천체가 없다', () => {
+    for (const z of ZONES) {
+      for (const pool of [deck, [...deck, ...bonus]]) {
+        const placed = chartLayout(z.id, deck, pool === deck ? [] : bonus);
+        if (placed.length === 0) continue;
+        const guides = chartGuides(z.id);
+        const g = startGuide(guides, placed, new Set());
+        for (const other of guides) expect(minDist(g, placed)).toBeGreaterThanOrEqual(minDist(other, placed));
+      }
+    }
+    const orion = chartLayout('orion', deck);
+    const g = startGuide(chartGuides('orion'), orion, new Set());
+    expect(minDist(g, orion)).toBeGreaterThan(VIEW_RADIUS);
   });
 });
 

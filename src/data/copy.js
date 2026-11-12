@@ -76,8 +76,10 @@ export const SCAN_TEXT = {
   toMap: '지도로 돌아가기',
   allDone: `${DECK_CARDS}장을 모두 모았어요! 이제 카드를 묶어 볼 차례예요.`,
   toSort: '묶기 시작',
-  request: '의뢰',
   requestElsewhere: (zone) => `의뢰 구역: ${zone}`,
+  target: '찾을 천체',      // 왼쪽 판 머리글: 이 구역에서 지금 찾을 임무 대상 하나
+  nextTarget: '다음',       // 임무 대상이 여럿일 때 넘겨 보는 버튼
+  targetIndex: (i, n) => `${i} / ${n}`,
 };
 
 // 쉬운 말 의뢰 문장에서 "…것"까지만 떼어 여러 대상을 한 줄로 보여 줄 때 쓴다.

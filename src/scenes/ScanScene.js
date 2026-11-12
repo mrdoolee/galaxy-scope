@@ -4,8 +4,9 @@ import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDL
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
 import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, TYPE_INFO, REGISTRY_TEXT } from '../data/copy.js';
-import { chartLayout } from '../logic/chart.js';
-import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur } from '../logic/scan.js';
+import { chartLayout, chartGuides } from '../logic/chart.js';
+import { startGuide, zoneClues } from '../logic/guide.js';
+import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
 import { recordFind } from '../logic/save.js';
@@ -15,9 +16,11 @@ import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { makeCard } from './ui/card.js';
 import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
-import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
+import { remainingTargets } from './ui/request.js';
 import { makeFocusSlider } from './ui/focusSlider.js';
 import { makeMiniMap } from './ui/miniMap.js';
+import { addChartSky } from './ui/chartSky.js';
+import { makeTargetPanel, panelTargets } from './ui/targetPanel.js';
 import { addBackdropPiece } from './ui/backdrop.js';
 
 const CX = GAME_WIDTH / 2;
@@ -54,8 +57,12 @@ export default class ScanScene extends Phaser.Scene {
     this.bonus = inBonus(state);
     this.pool = this.bonus ? OBJECTS : DECK; // 보너스 관측에서는 필수·보너스 천체를 모두 놓는다(찾은 것은 얼룩으로 보이지 않는다)
     // 실제 하늘 자리를 따른 배치(판마다 같다). 보너스 천체를 더해도 필수 카드 자리는 그대로다.
-    this.placed = chartLayout(this.zoneId, DECK, this.bonus ? OBJECTS.filter((o) => !o.deck) : []);
-    this.view = { x: ZONE_W / 2, y: ZONE_H / 2 };
+    const bonusObjects = this.bonus ? OBJECTS.filter((o) => !o.deck) : [];
+    this.placed = chartLayout(this.zoneId, DECK, bonusObjects);
+    this.clues = zoneClues(this.zoneId, DECK, bonusObjects);
+    // 이름 있는 길잡이 별에서 시작한다(못 찾은 천체에서 가장 먼 길잡이). 단서를 따라 옮겨 가야 찾는다.
+    const start = startGuide(chartGuides(this.zoneId), this.placed, this.found);
+    this.view = start ? clampView(start.x, start.y) : { x: ZONE_W / 2, y: ZONE_H / 2 };
     this.speed = 0;
     this.mode = 'sweep'; // sweep | focus | card
     this.idleMs = 0;
@@ -72,7 +79,7 @@ export default class ScanScene extends Phaser.Scene {
     this.refreshPanel();
   }
 
-  // ── 구역 하늘: 시드 난수로 찍은 별 + 천체 자리의 흐린 얼룩
+  // ── 구역 하늘: 시드 난수로 찍은 별 + 별자리(선, 밝은 별, 길잡이 이름표) + 천체 자리의 흐린 얼룩
   buildSky(seed) {
     this.sky = this.add.container(CX - this.view.x, CY - this.view.y);
     const rng = makeRng(seedFor(seed, `stars:${this.zoneId}`));
@@ -89,6 +96,7 @@ export default class ScanScene extends Phaser.Scene {
     g.lineStyle(3, COLOR.brass, 0.35);
     g.strokeRect(0, 0, ZONE_W, ZONE_H);
     this.sky.add(g);
+    addChartSky(this, this.sky, this.zoneId);
 
     this.smudges = new Map();
     for (const p of this.placed) {
@@ -156,12 +164,12 @@ export default class ScanScene extends Phaser.Scene {
     addText(this, SIDE_X, 140, this.zone.nameKo, { size: 28, bold: true, origin: [0.5, 0.5] });
     this.zoneCountText = addText(this, SIDE_X, 180, '', { size: MIN_FONT, origin: [0.5, 0.5], color: COLOR.textBrass });
     this.totalText = addText(this, SIDE_X, 214, '', { size: MIN_FONT, origin: [0.5, 0.5] });
-    this.requestBox = this.add.container(0, 0);
+    this.targetPanel = makeTargetPanel(this, SIDE_X, 244, 224);
 
     addPlate(this, CX - 330, 14, 660, 64, 0.85);
     this.status = addText(this, CX, 46, SCAN_TEXT.start, { size: 26, bold: true, origin: [0.5, 0.5] });
 
-    this.miniMap = makeMiniMap(this, RIGHT_X, 92, 200, this.placed);
+    this.miniMap = makeMiniMap(this, RIGHT_X, 92, 200, this.placed, this.zoneId);
     this.zoomBtn = makeButton(this, RIGHT_X, 560, {
       w: 200, h: 180, label: SCAN_TEXT.zoom, icon: 'icon-zoom', iconSize: 110, size: 28,
       onTap: () => this.enterFocus(),
@@ -173,7 +181,7 @@ export default class ScanScene extends Phaser.Scene {
     this.slider.container.setVisible(false);
   }
 
-  // 왼쪽 판: 구역 안 찾은 수, 전체 수집 수, 의뢰
+  // 왼쪽 판: 구역 안 찾은 수, 전체 수집 수, 지금 찾을 임무 대상과 단서
   refreshPanel() {
     const mine = this.placed.filter((p) => this.found.has(p.id)).length;
     this.zoneCountText.setText(SCAN_TEXT.zoneCount(mine, this.placed.length));
@@ -184,25 +192,13 @@ export default class ScanScene extends Phaser.Scene {
       this.totalText.setText(MAP_TEXT.count(this.found.size, DECK_SIZE));
     }
 
-    this.requestBox.removeAll(true);
     const request = refreshRequest(this);
-    const targets = remainingTargets(request, this.found, this.pool);
-    if (!request || targets.length === 0) return;
-    if (request.zoneId !== this.zoneId) {
+    if (request && request.zoneId !== this.zoneId && remainingTargets(request, this.found, this.pool).length > 0) {
       const zoneName = ZONES.find((z) => z.id === request.zoneId).nameKo;
-      this.requestBox.add(addText(this, SIDE_X, 270, SCAN_TEXT.requestElsewhere(zoneName), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0], color: COLOR.textDim }));
+      this.targetPanel.note(SCAN_TEXT.requestElsewhere(zoneName));
       return;
     }
-    this.requestBox.add(addText(this, SIDE_X, 262, SCAN_TEXT.request, { size: 24, bold: true, color: COLOR.textBrass, origin: [0.5, 0] }));
-    if (request.kind === 'term') {
-      this.requestBox.add(addText(this, SIDE_X, 302, termRequestText(request, OBJECTS), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0] }));
-    } else if (request.kind === 'picture') {
-      const size = 66;
-      const w = targets.length * size + (targets.length - 1) * 8;
-      this.requestBox.add(addRequestThumbs(this, SIDE_X - w / 2, 302, targets, size, 8));
-    } else {
-      this.requestBox.add(addText(this, SIDE_X, 302, plainLooks(targets).replaceAll(' · ', '\n'), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0] }));
-    }
+    this.targetPanel.set(panelTargets(request, this.zoneId, this.found, this.clues), request?.kind ?? null);
   }
 
   // ── 입력: 한 손가락 끌기. 두 번째 손가락, 화면 밖, 창 전환이면 끌기를 끝내고 속도 0.

@@ -17,6 +17,16 @@ test('하늘 지도·훑기·불러오기 화면 글에 분류 용어가 없다'
   }
 });
 
+test('훑기 화면 왼쪽 판의 새 글(머리글, 넘김 버튼, 순서 표시)이 있고 분류 용어가 없다', () => {
+  const panel = [SCAN_TEXT.target, SCAN_TEXT.nextTarget, SCAN_TEXT.targetIndex(1, 3)];
+  expect(SCAN_TEXT.targetIndex(1, 3)).toBe('1 / 3');
+  for (const s of panel) {
+    expect(typeof s).toBe('string');
+    expect(s.length).toBeGreaterThan(0);
+    for (const w of BANNED) expect(s, s).not.toContain(w);
+  }
+});
+
 test('구역 이름에도 분류 용어가 없다', () => {
   for (const z of ZONES) for (const w of BANNED) expect(z.nameKo).not.toContain(w);
 });

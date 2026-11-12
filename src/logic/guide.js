@@ -24,6 +24,23 @@ export function guideFor(target, guides) {
   return { nameKo: best.nameKo, dir: directionOf(best, target), band };
 }
 
+/**
+ * 훑기를 시작할 길잡이: 못 찾은 천체 중 가장 가까운 것까지의 거리가 가장 먼 길잡이.
+ * 학생은 이름 있는 별에서 시작해 단서를 따라 옮겨 가야 한다(시작하자마자 천체가 시야에 들지 않게).
+ * 못 찾은 천체가 없으면 첫 길잡이, 길잡이가 없으면 null. 같으면 앞의 것.
+ */
+export function startGuide(guides, placed, foundIds) {
+  const left = placed.filter((p) => !foundIds.has(p.id));
+  if (guides.length === 0) return null;
+  if (left.length === 0) return guides[0];
+  let best = null, bestD = -Infinity;
+  for (const g of guides) {
+    const d = Math.min(...left.map((p) => Math.hypot(p.x - g.x, p.y - g.y)));
+    if (d > bestD) { best = g; bestD = d; }
+  }
+  return best;
+}
+
 export function zoneClues(zoneId, deck, bonus = []) {
   const guides = chartGuides(zoneId);
   const clues = {};
