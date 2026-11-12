@@ -6,7 +6,7 @@ import { addText } from './style.js';
 import { makeButton } from './button.js';
 
 // 보너스 사진(deck: false)은 보너스 관측에 들어갈 때 처음 불러온다. 다 있으면 곧바로 onReady.
-// 실패하면 "다시 시도" 버튼을 보여 준다.
+// 실패하면 "다시 시도" 버튼을 보여 준다. 「결과 화면으로」 버튼은 부르는 장면이 먼저 놓는다(불러오는 중에도 나갈 수 있게).
 export function ensureBonusPhotos(scene, onReady) {
   const missing = () => OBJECTS.filter((o) => !o.deck && !scene.textures.exists(photoKey(o.id)));
   if (missing().length === 0) {

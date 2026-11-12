@@ -30,10 +30,6 @@ export function makeButton(scene, x, y, { w = 200, h = 88, label = '', icon = nu
     txt = addText(scene, 0, 0, label, { size, bold: true, origin: [0.5, 0.5], align: 'center' });
     c.add([bg, txt]);
   }
-  const draw = (on) => {
-    bg.setTint?.(on ? 0xffffff : 0x8890a0); // 나인슬라이스에는 색 입히기가 없다: 흐림(투명도)으로만 표시
-  };
-
   const hit = scene.add.zone(0, 0, w, h).setInteractive({ useHandCursor: true });
   c.add(hit);
 
@@ -42,8 +38,7 @@ export function makeButton(scene, x, y, { w = 200, h = 88, label = '', icon = nu
     enabled: true,
     setEnabled(on) {
       api.enabled = on;
-      draw(on);
-      c.setAlpha(on ? 1 : 0.55);
+      c.setAlpha(on ? 1 : 0.55); // 꺼진 버튼은 흐리게만 보인다
       return api;
     },
     setLabel(str) {
@@ -52,16 +47,17 @@ export function makeButton(scene, x, y, { w = 200, h = 88, label = '', icon = nu
     },
   };
   onPress(scene, hit, onTap, () => api.enabled);
-  draw(true);
   return api;
 }
 
 // 터치 영역 하나에 누르기 판정을 붙인다(버튼 판이 필요 없는 곳, 예: 하늘 지도의 별자리).
+// 시각은 게임 전체 시계로 잰다: 장면 시계(scene.time.now)는 장면을 다시 열면 앞 방문의 값을 들고 있다.
 export function onPress(scene, hit, onTap, isEnabled = () => true) {
-  const armedAt = scene.time.now + ARM_MS;
+  const clock = () => scene.game.loop.time;
+  const armedAt = clock() + ARM_MS;
   let press = null;
   hit.on('pointerdown', (p) => {
-    press = isEnabled() && scene.time.now >= armedAt ? { id: p.id, downTime: p.downTime } : null;
+    press = isEnabled() && clock() >= armedAt ? { id: p.id, downTime: p.downTime } : null;
   });
   hit.on('pointerup', (p) => {
     const ok = press && press.id === p.id && press.downTime === p.downTime;

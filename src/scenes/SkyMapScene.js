@@ -6,7 +6,7 @@ import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT } from '../data/copy.js';
 import { mapZoneIds } from '../logic/layout.js';
 import { openZones } from '../logic/requests.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
-import { DECK, DECK_SIZE, getState, refreshRequest } from './gameState.js';
+import { DECK, DECK_SIZE, getState, refreshRequest, skyMapRedirect } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { onPress, MIN_TOUCH, makeButton } from './ui/button.js';
 import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
@@ -27,10 +27,21 @@ export default class SkyMapScene extends Phaser.Scene {
   }
 
   create() {
+    // 모으기와 보너스 관측이 아니면(20장째를 얻자마자 「지도로」를 누른 경우 등) 그 단계의 장면으로 간다.
+    const redirect = skyMapRedirect(getState(this));
+    if (redirect) {
+      this.scene.start(redirect);
+      return;
+    }
     this.bonus = inBonus(getState(this));
     addBackdrop(this, 0x5c6684); // 별자리 선과 이름표가 배경 그림보다 앞에 보이게 어둡게
-    if (this.bonus) ensureBonusPhotos(this, () => this.build());
-    else this.build();
+    if (!this.bonus) {
+      this.build();
+      return;
+    }
+    // 보너스 사진을 불러오는 중이거나 실패해도 결과 화면으로 돌아갈 수 있게 버튼을 먼저 놓는다.
+    makeButton(this, 460, 652, { w: 280, h: 88, label: BONUS_TEXT.back, size: 28, onTap: () => this.scene.start(SCENES.RESULT) }).container.setDepth(10);
+    ensureBonusPhotos(this, () => this.build());
   }
 
   build() {
@@ -52,10 +63,7 @@ export default class SkyMapScene extends Phaser.Scene {
       this.drawZone(g, zone, status, request?.zoneId === id);
     }
 
-    if (this.bonus) {
-      makeButton(this, 460, 652, { w: 280, h: 88, label: BONUS_TEXT.back, size: 28, onTap: () => this.scene.start(SCENES.RESULT) });
-      return;
-    }
+    if (this.bonus) return; // 「결과 화면으로」 버튼은 create()에서 이미 놓았다
     // 8장째에 새 구역이 열렸으면 한 번 알린다.
     const openShown = shownIds.filter((id) => open.has(id)).length;
     const seen = this.registry.get('seenOpenCount');

@@ -28,7 +28,8 @@ describe('보너스 발견', () => {
     expect(next.foundIds).toContain(bonus[0].id);
     expect(next.phase).toBe('result');
     expect(recordBonusFind(next, bonus[0].id)).toBe(next);
-    expect(recordFind(s, bonus[0].id, 20).phase).toBe('sort');
+    // 결과 단계의 판에 recordFind를 썼다면 필수 카드가 다 있으니 sort로 보냈을 것이다.
+    expect(recordFind(s, bonus[0].id, deck.map((o) => o.id)).phase).toBe('sort');
   });
 
   it('보너스를 찾아도 점수와 발견 수는 그대로다', () => {

@@ -8,6 +8,7 @@ import { SCENES } from '../config/game.js';
 // 장면들이 함께 쓰는 진행 상황. 게임 registry에 한 벌만 두고, 바꿀 때마다 기기에 저장한다.
 export const DECK = OBJECTS.filter((o) => o.deck);
 export const DECK_SIZE = DECK.length;
+export const DECK_IDS = DECK.map((o) => o.id);
 
 function storage() {
   try {
@@ -25,8 +26,8 @@ export function bootState(registry) {
     state = newGame(Math.floor(Math.random() * 2 ** 31));
     if (st) save(st, state);
   }
-  // 손으로 고친 저장(필수 카드가 모자란데 묶기 이후 단계)은 모으기로 되돌린다.
-  const fixed = repairState(state, DECK.map((o) => o.id));
+  // 손으로 고친 저장(필수 카드가 모자란데 묶기 이후 단계)은 모으기로 되돌리고, 다 모았는데 모으기면 묶기로 올린다.
+  const fixed = repairState(state, DECK_IDS);
   if (fixed !== state) {
     state = fixed;
     if (st) save(st, state);
@@ -42,6 +43,9 @@ const PHASE_SCENE = { collect: SCENES.SKY_MAP, sort: SCENES.SORT, registry: SCEN
 export const sceneForPhase = (phase) => PHASE_SCENE[phase] ?? SCENES.SKY_MAP;
 // 결과 단계에서 보너스 관측 중이면 결과 화면이 아니라 하늘 지도로 돌아간다(결과는 지도의 "결과 화면으로"로 본다).
 export const sceneForState = (state) => (inBonus(state) ? SCENES.SKY_MAP : sceneForPhase(state.phase));
+// 하늘 지도는 모으기와 보너스 관측에서만 쓴다. 그 밖의 단계(예: 20장째를 얻자마자 「지도로」를 누름)로 들어오면
+// 그 단계의 장면 이름을 돌려준다. 머물러도 되면 null.
+export const skyMapRedirect = (state) => (state.phase === 'collect' || inBonus(state) ? null : sceneForState(state));
 
 export function persist(scene) {
   const st = storage();

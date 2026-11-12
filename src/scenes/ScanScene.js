@@ -10,7 +10,7 @@ import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
 import { recordFind } from '../logic/save.js';
 import { inBonus, recordBonusFind, bonusProgress } from '../logic/bonus.js';
-import { DECK, DECK_SIZE, getState, persist, refreshRequest } from './gameState.js';
+import { DECK, DECK_IDS, DECK_SIZE, getState, persist, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { makeCard } from './ui/card.js';
@@ -157,7 +157,7 @@ export default class ScanScene extends Phaser.Scene {
 
   // ── 화면 글과 버튼
   buildHud() {
-    makeButton(this, SIDE_X, 62, { w: 200, h: 88, label: SCAN_TEXT.back, onTap: () => this.scene.start(SCENES.SKY_MAP) });
+    this.backBtn = makeButton(this, SIDE_X, 62, { w: 200, h: 88, label: SCAN_TEXT.back, onTap: () => this.scene.start(SCENES.SKY_MAP) });
     addText(this, SIDE_X, 140, this.zone.nameKo, { size: 28, bold: true, origin: [0.5, 0.5] });
     this.zoneCountText = addText(this, SIDE_X, 180, '', { size: MIN_FONT, origin: [0.5, 0.5], color: COLOR.textBrass });
     this.totalText = addText(this, SIDE_X, 214, '', { size: MIN_FONT, origin: [0.5, 0.5] });
@@ -326,6 +326,7 @@ export default class ScanScene extends Phaser.Scene {
     this.reticle.setVisible(true);
     this.cancelBtn.container.setVisible(false);
     this.zoomBtn.container.setVisible(true);
+    this.backBtn.setEnabled(true);
     this.lockId = undefined; // 다음 프레임에 버튼과 조준 원을 다시 그린다
   }
 
@@ -341,9 +342,11 @@ export default class ScanScene extends Phaser.Scene {
   // ── 카드 얻기: 저장하고 "미확인 천체" 카드를 보여 준다
   capture(id) {
     this.mode = 'card';
+    // 카드가 뜰 때까지(0.65초) 「지도로」를 끈다. 카드 화면의 버튼으로만 나간다.
+    this.backBtn.setEnabled(false);
     const state = getState(this);
     // 보너스 천체는 점수와 단계에 영향을 주지 않는다: 단계는 그대로 두고 찾은 목록에만 넣는다.
-    const next = this.bonus ? recordBonusFind(state, id) : recordFind(state, id, DECK_SIZE);
+    const next = this.bonus ? recordBonusFind(state, id) : recordFind(state, id, DECK_IDS);
     this.registry.set('state', next);
     this.found = new Set(next.foundIds);
     const complete = !this.bonus && next.phase === 'sort';
