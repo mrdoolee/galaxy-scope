@@ -5,7 +5,7 @@ import { MAP_TEXT, SCAN_TEXT } from '../data/copy.js';
 import { mapZoneIds } from '../logic/layout.js';
 import { openZones } from '../logic/requests.js';
 import { DECK, DECK_SIZE, getState, refreshRequest } from './gameState.js';
-import { addText, addPlate, COLOR } from './ui/style.js';
+import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { onPress, MIN_TOUCH } from './ui/button.js';
 import { remainingTargets, plainLooks, addRequestThumbs } from './ui/request.js';
 
@@ -83,7 +83,7 @@ export default class SkyMapScene extends Phaser.Scene {
 
     const name = status === 'done' ? `${zone.nameKo} ✓` : zone.nameKo;
     addText(this, x, y + LABEL_DY, name, {
-      size: 20, bold: on, color: on ? COLOR.text : COLOR.textDim, origin: [0.5, 0.5], stroke: 5,
+      size: MIN_FONT, bold: on, color: on ? COLOR.text : COLOR.textDim, origin: [0.5, 0.5], stroke: 5,
     }).setAlpha(status === 'locked' ? 0.75 : 1);
 
     if (requested) {

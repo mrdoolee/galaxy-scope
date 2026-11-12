@@ -4,11 +4,12 @@ import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDL
 import { ZONES } from '../data/zones.js';
 import { SCAN_TEXT, MAP_TEXT } from '../data/copy.js';
 import { zoneLayout } from '../logic/layout.js';
-import { clampView, viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur } from '../logic/scan.js';
-import { createDrag, createSpeedMeter } from '../logic/drag.js';
+import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur } from '../logic/scan.js';
+import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
+import { recordFind } from '../logic/save.js';
 import { DECK, DECK_SIZE, getState, persist, refreshRequest } from './gameState.js';
-import { addText, addPlate, COLOR } from './ui/style.js';
+import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { makeCard } from './ui/card.js';
 import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
@@ -151,8 +152,8 @@ export default class ScanScene extends Phaser.Scene {
   buildHud() {
     makeButton(this, SIDE_X, 62, { w: 200, h: 88, label: SCAN_TEXT.back, onTap: () => this.scene.start(SCENES.SKY_MAP) });
     addText(this, SIDE_X, 140, this.zone.nameKo, { size: 28, bold: true, origin: [0.5, 0.5] });
-    this.zoneCountText = addText(this, SIDE_X, 180, '', { size: 22, origin: [0.5, 0.5], color: COLOR.textBrass });
-    this.totalText = addText(this, SIDE_X, 212, '', { size: 22, origin: [0.5, 0.5] });
+    this.zoneCountText = addText(this, SIDE_X, 180, '', { size: MIN_FONT, origin: [0.5, 0.5], color: COLOR.textBrass });
+    this.totalText = addText(this, SIDE_X, 214, '', { size: MIN_FONT, origin: [0.5, 0.5] });
     this.requestBox = this.add.container(0, 0);
 
     addPlate(this, CX - 330, 14, 660, 64, 0.85);
@@ -182,7 +183,7 @@ export default class ScanScene extends Phaser.Scene {
     if (!request || targets.length === 0) return;
     if (request.zoneId !== this.zoneId) {
       const zoneName = ZONES.find((z) => z.id === request.zoneId).nameKo;
-      this.requestBox.add(addText(this, SIDE_X, 270, SCAN_TEXT.requestElsewhere(zoneName), { size: 20, wrap: 210, align: 'center', origin: [0.5, 0], color: COLOR.textDim }));
+      this.requestBox.add(addText(this, SIDE_X, 270, SCAN_TEXT.requestElsewhere(zoneName), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0], color: COLOR.textDim }));
       return;
     }
     this.requestBox.add(addText(this, SIDE_X, 262, SCAN_TEXT.request, { size: 24, bold: true, color: COLOR.textBrass, origin: [0.5, 0] }));
@@ -191,17 +192,20 @@ export default class ScanScene extends Phaser.Scene {
       const w = targets.length * size + (targets.length - 1) * 8;
       this.requestBox.add(addRequestThumbs(this, SIDE_X - w / 2, 302, targets, size, 8));
     } else {
-      this.requestBox.add(addText(this, SIDE_X, 302, plainLooks(targets).replaceAll(' · ', '\n'), { size: 20, wrap: 210, align: 'center', origin: [0.5, 0] }));
+      this.requestBox.add(addText(this, SIDE_X, 302, plainLooks(targets).replaceAll(' · ', '\n'), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0] }));
     }
   }
 
   // ── 입력: 한 손가락 끌기. 두 번째 손가락, 화면 밖, 창 전환이면 끌기를 끝내고 속도 0.
   bindInput() {
     const now = () => performance.now();
+    // 끌기와 초점 눈금 잡기를 모두 놓는다. 세로로 돌려 게임이 멈출 때(game pause), 창 전환(blur, hidden),
+    // 손가락이 화면 밖으로 나갈 때 부른다. 멈춘 동안의 손가락은 다시 움직여도 끌기로 이어지지 않는다.
     const stop = () => {
       this.drag.cancel();
       this.meter.reset(now());
       this.speed = 0;
+      this.slider.release();
     };
     this.input.on('pointerdown', (p, over) => {
       if (this.mode !== 'sweep') return;
@@ -214,9 +218,9 @@ export default class ScanScene extends Phaser.Scene {
     this.input.on('pointermove', (p) => {
       const d = this.drag.move(p.id, p.x, p.y);
       if (!d) return;
-      const next = clampView(this.view.x - d.dx, this.view.y - d.dy);
-      this.meter.sample(Math.hypot(next.x - this.view.x, next.y - this.view.y), now());
-      this.view = next;
+      const step = dragStep(this.view, d);
+      this.meter.sample(step.dist, now());
+      this.view = step.view;
       this.moved = true;
     });
     const up = (p) => {
@@ -226,10 +230,9 @@ export default class ScanScene extends Phaser.Scene {
     this.input.on('pointerup', up);
     this.input.on('pointerupoutside', up);
     this.input.on('gameout', stop);
-    const gameEvents = [['blur', stop], ['hidden', stop]];
+    // main.js의 game.pause()는 게임의 'pause' 이벤트를 낸다(장면의 pause가 아니다).
+    const gameEvents = [['pause', stop], ['blur', stop], ['hidden', stop]];
     for (const [ev, fn] of gameEvents) this.game.events.on(ev, fn);
-    this.events.on('pause', stop);
-    this.events.on('sleep', stop);
     this.events.once('shutdown', () => {
       for (const [ev, fn] of gameEvents) this.game.events.off(ev, fn);
     });
@@ -324,11 +327,10 @@ export default class ScanScene extends Phaser.Scene {
   // ── 카드 얻기: 저장하고 "미확인 천체" 카드를 보여 준다
   capture(id) {
     this.mode = 'card';
-    const state = getState(this);
-    if (!state.foundIds.includes(id)) state.foundIds.push(id);
-    this.found.add(id);
-    const complete = this.found.size >= DECK_SIZE;
-    if (complete) state.phase = 'sort';
+    const next = recordFind(getState(this), id, DECK_SIZE);
+    this.registry.set('state', next);
+    this.found = new Set(next.foundIds);
+    const complete = next.phase === 'sort';
     persist(this);
 
     this.slider.release();

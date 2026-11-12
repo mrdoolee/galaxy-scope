@@ -62,3 +62,11 @@ export function clear(storage) {
     // 무시
   }
 }
+
+// 카드 한 장을 찾았을 때의 다음 상태. 이미 찾은 id는 무시한다.
+// 필수 카드(deckSize장)를 다 모으면 묶기 단계('sort')로 넘어간다.
+export function recordFind(state, id, deckSize) {
+  if (state.foundIds.includes(id)) return state;
+  const foundIds = [...state.foundIds, id];
+  return { ...state, foundIds, phase: foundIds.length >= deckSize ? 'sort' : state.phase };
+}

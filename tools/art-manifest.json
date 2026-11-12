@@ -24,6 +24,12 @@
     { "file": "rank-badge-2.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
       "prompt": "A round rank badge for a regular researcher: brass disc with a laurel ring and two stars, more ornate than a plain bronze badge, transparent background." },
     { "file": "rank-badge-3.png", "size": [256, 256], "request_size": "1024x1024", "transparent": true,
-      "prompt": "A grand round rank badge for a senior researcher: gold and brass disc with an ornate laurel wreath, three stars, a small crown-like crest on top, gems and a glow, the most impressive of three badges, transparent background." }
+      "prompt": "A grand round rank badge for a senior researcher: gold and brass disc with an ornate laurel wreath, three stars, a small crown-like crest on top, gems and a glow, the most impressive of three badges, transparent background." },
+    { "file": "btn-plate.png", "size": [1536, 1024], "request_size": "1536x1024", "transparent": true, "trim": true, "maxSide": 768, "palette": true,
+      "prompt": "A single wide horizontal game UI button plate seen straight on, exactly three times wider than it is tall, centred and spanning most of the image width: a flat dark navy face with an even brass rim of constant thickness all around and softly rounded corners. The face is completely plain and empty (no text, no icon, no gems, no ornament in the middle) so it can be stretched. Transparent background outside the plate." },
+    { "file": "btn-plate-round.png", "size": [1024, 1024], "request_size": "1024x1024", "transparent": true, "trim": true, "maxSide": 384, "palette": true,
+      "prompt": "A single round game UI button plate seen straight on, centred: a flat dark navy circular face with an even brass rim, plain and empty in the middle (no text, no icon, no symbol) so an icon can sit on top. Transparent background outside the circle." },
+    { "file": "panel-plate.png", "size": [1536, 1024], "request_size": "1536x1024", "transparent": true, "trim": true, "maxSide": 768, "palette": true,
+      "prompt": "A single rectangular game UI text panel seen straight on, centred and spanning most of the image: a flat dark navy face with a thin even brass border line of constant thickness all around and softly rounded corners. The face is completely plain and empty (no text, no pattern, no ornament) so it can be stretched as a text box. Transparent background outside the panel." }
   ]
 }

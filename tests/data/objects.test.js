@@ -52,13 +52,15 @@ test('id가 사진 파일 이름과 같고 거리가 양수', () => {
   }
 });
 
-// 하늘 지도: 88×88 터치 대상과 그 아래 이름표(140×24)가 서로 겹치지 않고, 위쪽 110px은 비운다.
-const TARGET = 88, LABEL_W = 140, LABEL_H = 24, LABEL_GAP = 4;
+// 하늘 지도: 88×88 터치 대상과 그 아래 이름표가 서로 겹치지 않고, 위쪽 110px은 비운다.
+// 이름표는 24px 글씨(학생 글 최소 크기): 너비는 글자 수 × 24 + 테두리 여유 12, 높이 28.
+const TARGET = 88, FONT = 24, LABEL_H = 28, LABEL_GAP = 4;
 function boxesOf(z) {
   const h = TARGET / 2;
+  const w = z.nameKo.length * FONT + 12;
   return [
     { l: z.mapX - h, r: z.mapX + h, t: z.mapY - h, b: z.mapY + h },
-    { l: z.mapX - LABEL_W / 2, r: z.mapX + LABEL_W / 2, t: z.mapY + h + LABEL_GAP, b: z.mapY + h + LABEL_GAP + LABEL_H },
+    { l: z.mapX - w / 2, r: z.mapX + w / 2, t: z.mapY + h + LABEL_GAP, b: z.mapY + h + LABEL_GAP + LABEL_H },
   ];
 }
 const overlap = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;

@@ -1,4 +1,5 @@
-import { createDrag, createSpeedMeter } from '../../src/logic/drag.js';
+import { createDrag, createSpeedMeter, dragStep } from '../../src/logic/drag.js';
+import { SMUDGE_SPEED, BLUR_SPEED } from '../../src/config/balance.js';
 
 describe('createDrag', () => {
   it('한 손가락으로 끌면 움직인 만큼 돌려준다', () => {
@@ -84,5 +85,28 @@ describe('createSpeedMeter', () => {
     expect(m.read(10)).toBeGreaterThan(0);
     m.reset(20);
     expect(m.read(20)).toBe(0);
+  });
+});
+
+describe('dragStep', () => {
+  it('시야는 손가락 반대로 움직이고, 속도용 거리는 손가락이 움직인 거리다', () => {
+    expect(dragStep({ x: 1000, y: 800 }, { dx: 30, dy: -40 })).toEqual({ view: { x: 970, y: 840 }, dist: 50 });
+  });
+
+  it('가장자리에 붙어 시야가 못 움직여도 손가락을 빨리 휘두르면 빠르게 잰다', () => {
+    // 시야가 왼쪽 끝(x=0)에 붙은 채 손가락을 오른쪽으로 휘두른다: 시야는 그대로, 거리는 그대로 잡힌다
+    let view = { x: 0, y: 800 };
+    const m = createSpeedMeter();
+    m.reset(0);
+    let t = 0;
+    for (let i = 0; i < 30; i++) {
+      t += 16;
+      const step = dragStep(view, { dx: 40, dy: 0 }); // 2500px/s
+      expect(step.view).toEqual({ x: 0, y: 800 });
+      view = step.view;
+      m.sample(step.dist, t);
+    }
+    expect(m.read(t)).toBeGreaterThan(SMUDGE_SPEED);
+    expect(m.read(t)).toBeGreaterThan(BLUR_SPEED);
   });
 });

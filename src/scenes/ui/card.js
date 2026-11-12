@@ -1,5 +1,5 @@
 import { photoKey, coverImage } from './photoTextures.js';
-import { addText, COLOR } from './style.js';
+import { addText, COLOR, MIN_FONT } from './style.js';
 
 // card-frame.png(512×768)의 사진 창과 아래 글 띠. tools/art-manifest.json의 window 값과 같다.
 const CARD_W = 512;
@@ -22,7 +22,7 @@ export function makeCard(scene, x, y, { id, height = 460, label = '' } = {}) {
   const frame = scene.add.image(0, 0, 'card-frame').setScale(s);
   c.add([photo, frame]);
   if (label) {
-    c.add(addText(scene, 0, (BAND_Y - CARD_H / 2) * s, label, { size: Math.round(44 * s), bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
+    c.add(addText(scene, 0, (BAND_Y - CARD_H / 2) * s, label, { size: Math.max(MIN_FONT, Math.round(44 * s)), bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
   }
   c.setSize(CARD_W * s, CARD_H * s);
   return c;

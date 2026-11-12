@@ -1,4 +1,4 @@
-import { SAVE_KEY, newGame, load, save, clear } from '../../src/logic/save.js';
+import { SAVE_KEY, newGame, load, save, clear, recordFind } from '../../src/logic/save.js';
 
 function fakeStorage(init = {}) {
   const m = new Map(Object.entries(init));
@@ -93,5 +93,32 @@ describe('clear', () => {
 
   it('does not throw when storage throws', () => {
     expect(() => clear(throwing())).not.toThrow();
+  });
+});
+
+describe('recordFind', () => {
+  it('찾은 카드를 더한 새 상태를 돌려주고, 원래 상태는 바꾸지 않는다', () => {
+    const s0 = newGame(3);
+    const s1 = recordFind(s0, 'm42', 20);
+    expect(s1.foundIds).toEqual(['m42']);
+    expect(s1.phase).toBe('collect');
+    expect(s0.foundIds).toEqual([]);
+    expect(s1).not.toBe(s0);
+  });
+
+  it('이미 찾은 id는 다시 더하지 않는다', () => {
+    const s1 = recordFind(newGame(3), 'm42', 20);
+    const s2 = recordFind(s1, 'm42', 20);
+    expect(s2.foundIds).toEqual(['m42']);
+    expect(s2.phase).toBe('collect');
+  });
+
+  it('20장째에 묶기 단계로 넘어간다', () => {
+    let s = newGame(3);
+    for (let i = 0; i < 19; i++) s = recordFind(s, `c${i}`, 20);
+    expect(s.phase).toBe('collect');
+    s = recordFind(s, 'c19', 20);
+    expect(s.foundIds).toHaveLength(20);
+    expect(s.phase).toBe('sort');
   });
 });

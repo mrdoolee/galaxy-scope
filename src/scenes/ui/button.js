@@ -1,4 +1,4 @@
-import { COLOR, addText } from './style.js';
+import { addText, addSliced, PLATES } from './style.js';
 
 // 같은 손가락이 이 버튼 위에서 눌렀다가 뗄 때만 누른 것으로 친다.
 // 앞 화면에서 누르고 있던 손가락이 새 버튼 위에서 떨어져도 눌리지 않도록, 나타난 뒤 ARM_MS 동안은 무시한다.
@@ -10,28 +10,29 @@ export const MIN_TOUCH = 88;
  *   makeButton(scene, x, y, { w, h, label, icon, iconSize, size, onTap })
  *   -> { container, setEnabled(bool), setLabel(str), enabled }
  */
-export function makeButton(scene, x, y, { w = 200, h = 88, label = '', icon = null, iconSize = 72, size = 26, onTap = () => {} } = {}) {
+export function makeButton(scene, x, y, { w = 200, h = 88, label = '', icon = null, iconSize = 72, size = 28, onTap = () => {} } = {}) {
   w = Math.max(w, MIN_TOUCH);
   h = Math.max(h, MIN_TOUCH);
   const c = scene.add.container(x, y);
-  const bg = scene.add.graphics();
-  const draw = (on) => {
-    bg.clear();
-    bg.fillStyle(on ? COLOR.navyLight : COLOR.navy, on ? 0.95 : 0.7);
-    bg.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
-    bg.lineStyle(3, COLOR.brass, on ? 1 : 0.35);
-    bg.strokeRoundedRect(-w / 2, -h / 2, w, h, 16);
-  };
-  c.add(bg);
-
-  let img = null;
+  // 판은 게임 그림. 아이콘 버튼: 둥근 판 위에 아이콘, 그 아래 이름. 글 버튼: 넓은 판(나인슬라이스) 위에 글.
+  let bg;
+  let txt;
   if (icon) {
-    img = scene.add.image(0, label ? -14 : 0, icon);
+    const d = Math.min(w, h - (label ? 44 : 0));
+    const cy = label ? -22 : 0;
+    bg = scene.add.image(0, cy, 'btn-plate-round').setDisplaySize(d, d);
+    const img = scene.add.image(0, cy, icon);
     img.setScale(iconSize / img.width);
-    c.add(img);
+    txt = addText(scene, 0, h / 2 - 20, label, { size, bold: true, origin: [0.5, 0.5], align: 'center', stroke: 5 });
+    c.add([bg, img, txt]);
+  } else {
+    bg = addSliced(scene, PLATES.button, 0, 0, w, h);
+    txt = addText(scene, 0, 0, label, { size, bold: true, origin: [0.5, 0.5], align: 'center' });
+    c.add([bg, txt]);
   }
-  const txt = addText(scene, 0, icon ? h / 2 - 22 : 0, label, { size, bold: true, origin: [0.5, 0.5], align: 'center' });
-  c.add(txt);
+  const draw = (on) => {
+    bg.setTint?.(on ? 0xffffff : 0x8890a0); // 나인슬라이스에는 색 입히기가 없다: 흐림(투명도)으로만 표시
+  };
 
   const hit = scene.add.zone(0, 0, w, h).setInteractive({ useHandCursor: true });
   c.add(hit);

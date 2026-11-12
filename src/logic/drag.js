@@ -1,3 +1,5 @@
+import { clampView } from './scan.js';
+
 // 한 손가락 끌기 추적. Phaser에 의존하지 않는다.
 // 두 번째 손가락이 닿으면 끌기를 끝내고, 모든 손가락을 뗀 뒤 새로 대야 다시 끌 수 있다.
 //   down(id, x, y, downCount)  downCount: 지금 눌려 있는 손가락 수(이 손가락 포함)
@@ -72,4 +74,11 @@ export function createSpeedMeter() {
       return idle <= IDLE_MS ? speed : speed * Math.exp(-(idle - IDLE_MS) / DECAY_TAU_MS);
     },
   };
+}
+
+// 끌기 한 번: 시야는 손가락 반대 방향으로 움직이고 구역 안에 머문다.
+// 속도용 거리는 손가락이 움직인 거리다. 시야가 가장자리에 붙어 움직이지 못해도
+// 휘두르는 손가락은 빠르게 잡혀야 한다(가장자리에서 휘둘러 얼룩을 보는 장난을 막는다).
+export function dragStep(view, d) {
+  return { view: clampView(view.x - d.dx, view.y - d.dy), dist: Math.hypot(d.dx, d.dy) };
 }

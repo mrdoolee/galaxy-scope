@@ -3,6 +3,7 @@
 //   node tools/gen-art.mjs --postprocess   (alpha cleanup of existing files, no API call, no key needed)
 // Reads OPENAI_API_KEY and OPENAI_IMAGE_MODEL from process.env only; never prints the key.
 // Skips files that already exist in public/art unless --force is given.
+// Optional per asset: trim (cut transparent margins after cleanup), maxSide (shrink to fit inside this square).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -91,6 +92,18 @@ async function cleanAlpha(buf, a) {
   return sharp(data, { raw: { width: W, height: H, channels: 4 } });
 }
 
+// Crop to the bounding box of pixels with alpha > 0 (RGB under transparent pixels is arbitrary, so colour trim is unsafe).
+async function trimAlpha(buf) {
+  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = info.width, H = info.height;
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (data[(y * W + x) * 4 + 3] > 0) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) return sharp(buf);
+  return sharp(buf).extract({ left: x0, top: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 });
+}
+
 const pngOpts = (a) => ({ compressionLevel: 9, ...(a.palette ? { palette: true, quality: 92, effort: 10 } : {}) });
 
 async function main() {
@@ -124,6 +137,9 @@ async function main() {
     let img = sharp(Buffer.from(b64, 'base64')).ensureAlpha().resize(a.size[0], a.size[1], { fit: 'fill' });
     if (a.cutHole) img = await circleHole(await img.png().toBuffer(), a.size, a.cutHole);
     if (a.transparent) img = await cleanAlpha(await img.png().toBuffer(), a);
+    // trim: cut the transparent margin so the plate touches the image edges (needed for nine-slice), then cap the size.
+    if (a.trim) img = await trimAlpha(await img.png().toBuffer());
+    if (a.maxSide) img = sharp(await img.png().toBuffer()).resize(a.maxSide, a.maxSide, { fit: 'inside', withoutEnlargement: true });
     await img.png(pngOpts(a)).toFile(resolve(outDir, a.file));
     console.log(`wrote ${a.file}`);
   }));
