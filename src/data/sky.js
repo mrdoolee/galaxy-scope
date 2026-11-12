@@ -117,25 +117,40 @@ export const SKY = {
   ], [['xi', 'omicron'], ['omicron', 'zeta'], ['zeta', 'eta'], ['eta', 'theta']],
   [['뱀자리 에타별', 'eta'], ['뱀자리 크시별', 'xi'], ['뱀주인자리 뉴별', 'nuOph']]),
 
-  ophiuchus: zone({ ra: 17.0, dec: -17.5 }, 44, [
-    star('yedPrior', 16.239, -3.69, 2.74),  // δ
+  // 머리(라스알하게)부터 발(θ)과 그 옆의 두 천체까지 한 창에 들어오게 넓게 잡는다.
+  ophiuchus: zone({ ra: 17.1, dec: -7.5 }, 70, [
+    star('rasalhague', 17.582, 12.56, 2.08), // α
+    star('cebalrai', 17.725, 4.57, 2.77),    // β
+    star('gamma', 17.798, 2.71, 3.75),
+    star('nu', 17.984, -9.77, 3.33),
+    star('kappa', 16.961, 9.38, 3.20),
+    star('lambda', 16.515, 1.98, 3.82),
+    star('yedPrior', 16.239, -3.69, 2.74),   // δ
     star('yedPosterior', 16.305, -4.69, 3.24), // ε
     star('zeta', 16.619, -10.57, 2.56),
-    star('sabik', 17.173, -15.72, 2.43),    // η
+    star('sabik', 17.173, -15.72, 2.43),     // η
     star('theta', 17.367, -25.00, 3.27),
-    star('antares', 16.490, -26.43, 1.06),  // 전갈자리 α
-  ], [['yedPrior', 'yedPosterior'], ['zeta', 'sabik'], ['sabik', 'theta']],
-  [['사빅', 'sabik'], ['뱀주인자리 세타별', 'theta'], ['안타레스', 'antares']]),
+    star('antares', 16.490, -26.43, 1.06),   // 전갈자리 α
+  ], [
+    ['rasalhague', 'cebalrai'], ['rasalhague', 'kappa'], ['kappa', 'lambda'], ['lambda', 'yedPrior'],
+    ['yedPrior', 'yedPosterior'], ['yedPosterior', 'zeta'], ['zeta', 'sabik'], ['sabik', 'cebalrai'],
+    ['cebalrai', 'gamma'], ['gamma', 'nu'], ['sabik', 'theta'],
+  ], [['라스알하게', 'rasalhague'], ['사빅', 'sabik'], ['뱀주인자리 세타별', 'theta'], ['안타레스', 'antares']]),
 
-  virgo: zone({ ra: 12.8, dec: -9.0 }, 34, [
+  virgo: zone({ ra: 12.8, dec: -6.0 }, 37, [
     star('spica', 13.420, -11.16, 0.97),   // α
     star('theta', 13.166, -5.54, 4.38),
     star('porrima', 12.694, -1.45, 2.74),  // γ
     star('eta', 12.332, -0.67, 3.89),
     star('zavijava', 11.845, 1.76, 3.61),  // β
+    star('delta', 12.927, 3.40, 3.38),
+    star('heze', 13.578, -0.60, 3.37),     // ζ
     star('gienah', 12.263, -17.54, 2.59),  // 까마귀자리 γ
     star('algorab', 12.498, -16.52, 2.95), // 까마귀자리 δ
-  ], [['spica', 'theta'], ['theta', 'porrima'], ['porrima', 'eta'], ['eta', 'zavijava']],
+  ], [
+    ['spica', 'theta'], ['theta', 'porrima'], ['porrima', 'eta'], ['eta', 'zavijava'],
+    ['porrima', 'delta'], ['delta', 'heze'], ['heze', 'spica'],
+  ],
   [['스피카', 'spica'], ['포리마', 'porrima'], ['까마귀자리 델타별', 'algorab']]),
 
   orion: zone({ ra: 5.6, dec: 0 }, 32, [
@@ -188,12 +203,16 @@ export const SKY = {
     star('tau', 16.598, -28.22, 2.82),
     star('epsilon', 16.836, -34.29, 2.29),
     star('mu1', 16.864, -38.05, 3.0),
+    star('zeta2', 16.910, -42.36, 3.62),
+    star('eta', 17.203, -43.24, 3.33),
     star('sargas', 17.622, -43.00, 1.86),   // θ
+    star('iota1', 17.793, -40.13, 2.99),
     star('kappa', 17.708, -39.03, 2.39),
     star('shaula', 17.560, -37.10, 1.62),   // λ
   ], [
     ['acrab', 'dschubba'], ['dschubba', 'pi'], ['dschubba', 'antares'], ['antares', 'tau'],
-    ['tau', 'epsilon'], ['epsilon', 'mu1'], ['mu1', 'sargas'], ['sargas', 'kappa'], ['kappa', 'shaula'],
+    ['tau', 'epsilon'], ['epsilon', 'mu1'], ['mu1', 'zeta2'], ['zeta2', 'eta'], ['eta', 'sargas'],
+    ['sargas', 'iota1'], ['iota1', 'kappa'], ['kappa', 'shaula'],
   ], [['안타레스', 'antares'], ['샤울라', 'shaula']]),
 
   centaurus: zone({ ra: 13.7, dec: -51.0 }, 38, [
@@ -207,7 +226,7 @@ export const SKY = {
   ], [
     ['delta', 'gamma'], ['gamma', 'epsilon'], ['epsilon', 'hadar'], ['hadar', 'rigilKent'],
     ['epsilon', 'zeta'], ['zeta', 'eta'],
-  ], [['센타우루스자리 알파별', 'rigilKent'], ['하다르', 'hadar'], ['센타우루스자리 제타별', 'zeta'], ['센타우루스자리 감마별', 'gamma']]),
+  ], [['리길 켄타우루스', 'rigilKent'], ['하다르', 'hadar'], ['센타우루스자리 제타별', 'zeta'], ['센타우루스자리 감마별', 'gamma']]),
 
   vela: zone({ ra: 8.7, dec: -50.0 }, 30, [
     star('gamma', 8.159, -47.34, 1.83),  // γ²

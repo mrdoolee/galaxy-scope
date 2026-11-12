@@ -35,6 +35,23 @@ test('선은 그 구역의 별을 잇고, 별 id는 구역 안에서 겹치지 �
   }
 });
 
+// 별자리 그림은 한 덩어리여야 알아볼 수 있다: 선에 쓰인 별(그 구역 별자리의 별)이 모두 선으로 이어진다.
+// 예외가 필요한 구역이 생기면 여기에 이름과 까닭을 적는다(지금은 없다).
+test('구역마다 별자리 그림(선에 쓰인 별)이 끊기지 않고 하나로 이어진다', () => {
+  for (const z of ZONES) {
+    const { segs } = SKY[z.id];
+    const nodes = [...new Set(segs.flat())];
+    const reached = new Set([nodes[0]]);
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const [a, b] of segs) {
+        if (reached.has(a) !== reached.has(b)) { reached.add(a); reached.add(b); grew = true; }
+      }
+    }
+    expect(nodes.filter((id) => !reached.has(id)), z.id).toEqual([]);
+  }
+});
+
 test('별과 길잡이 좌표가 실제 하늘의 범위(적경 0~24시, 적위 -90~90도, 등급은 유한한 수)', () => {
   for (const z of ZONES) {
     const s = SKY[z.id];
