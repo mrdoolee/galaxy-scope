@@ -1,4 +1,4 @@
-import { requestKind, makeRequest, openZones } from '../../src/logic/requests.js';
+import { requestKind, makeRequest, openZones, makeTermRequest, currentTermRequest } from "../../src/logic/requests.js";
 import { makeRng } from '../../src/logic/rng.js';
 import { ZONES } from '../../src/data/zones.js';
 import { PLAIN_REQUEST } from '../../src/data/copy.js';

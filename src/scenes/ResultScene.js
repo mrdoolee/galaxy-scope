@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, SCENES } from '../config/game.js';
-import { RESULT_TEXT } from '../data/copy.js';
+import { RESULT_TEXT, BONUS_TEXT } from '../data/copy.js';
 import { scoreReport } from '../logic/result.js';
-import { DECK, getState, resetGame, sceneForPhase } from './gameState.js';
+import { openBonus } from '../logic/bonus.js';
+import { DECK, getState, resetGame, commit, sceneForPhase } from './gameState.js';
 import { addBackdrop } from './SkyMapScene.js';
 import { addText, addPlate, COLOR } from './ui/style.js';
 import { makeButton } from './ui/button.js';
@@ -82,8 +83,16 @@ export default class ResultScene extends Phaser.Scene {
       },
     });
     const credits = makeButton(this, 0, BUTTON_Y, { w: 300, h: 96, label: RESULT_TEXT.credits, size: 28, onTap: () => this.scene.start(SCENES.CREDITS, { from: SCENES.RESULT }) });
-    // 아래 버튼 줄. 보너스 구역 작업에서 이 목록에 버튼 하나를 더하면 고르게 다시 놓인다.
-    const row = [credits, restart];
+    // 보너스 관측: 결과 단계는 그대로 두고 보너스만 연다. 점수는 바뀌지 않는다.
+    const bonus = makeButton(this, 0, BUTTON_Y, {
+      w: 300, h: 96, label: BONUS_TEXT.open, size: 28,
+      onTap: () => {
+        commit(this, openBonus(getState(this)));
+        this.scene.start(SCENES.SKY_MAP);
+      },
+    });
+    // 아래 버튼 줄. 목록에 버튼을 더하면 고르게 다시 놓인다.
+    const row = [bonus, credits, restart];
     row.forEach((b, i) => b.container.setX((GAME_WIDTH * (i + 0.5)) / row.length));
   }
 }

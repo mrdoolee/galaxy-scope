@@ -1,7 +1,8 @@
-import { load, save, clear, newGame } from '../logic/save.js';
+import { load, save, clear, newGame, repairState } from '../logic/save.js';
 import { OBJECTS } from '../data/objects.js';
 import { ZONES } from '../data/zones.js';
-import { openZones, currentRequest } from '../logic/requests.js';
+import { openZones, currentRequest, currentTermRequest } from '../logic/requests.js';
+import { inBonus } from '../logic/bonus.js';
 import { SCENES } from '../config/game.js';
 
 // 장면들이 함께 쓰는 진행 상황. 게임 registry에 한 벌만 두고, 바꿀 때마다 기기에 저장한다.
@@ -24,6 +25,12 @@ export function bootState(registry) {
     state = newGame(Math.floor(Math.random() * 2 ** 31));
     if (st) save(st, state);
   }
+  // 손으로 고친 저장(필수 카드가 모자란데 묶기 이후 단계)은 모으기로 되돌린다.
+  const fixed = repairState(state, DECK.map((o) => o.id));
+  if (fixed !== state) {
+    state = fixed;
+    if (st) save(st, state);
+  }
   registry.set('state', state);
   return state;
 }
@@ -33,6 +40,8 @@ export const getState = (scene) => scene.registry.get('state');
 // 불러온 판의 단계에 맞는 장면(불러오기 뒤, 새로 고침 뒤).
 const PHASE_SCENE = { collect: SCENES.SKY_MAP, sort: SCENES.SORT, registry: SCENES.REGISTRY, result: SCENES.RESULT };
 export const sceneForPhase = (phase) => PHASE_SCENE[phase] ?? SCENES.SKY_MAP;
+// 결과 단계에서 보너스 관측 중이면 결과 화면이 아니라 하늘 지도로 돌아간다(결과는 지도의 "결과 화면으로"로 본다).
+export const sceneForState = (state) => (inBonus(state) ? SCENES.SKY_MAP : sceneForPhase(state.phase));
 
 export function persist(scene) {
   const st = storage();
@@ -59,6 +68,11 @@ export function resetGame(scene) {
 export function refreshRequest(scene) {
   const state = getState(scene);
   const found = new Set(state.foundIds);
+  if (inBonus(state)) {
+    const term = currentTermRequest(scene.registry.get('request') ?? null, found, state.seed, OBJECTS);
+    scene.registry.set('request', term);
+    return term;
+  }
   const req = currentRequest(scene.registry.get('request') ?? null, found, state.seed, DECK, openZones(found.size, ZONES));
   scene.registry.set('request', req);
   return req;

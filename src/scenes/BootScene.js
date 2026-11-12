@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { BOOT_TEXT } from '../data/copy.js';
-import { DECK, bootState, sceneForPhase } from './gameState.js';
+import { DECK, bootState, sceneForState } from './gameState.js';
 import { photoKey } from './ui/photoTextures.js';
 import { addText, COLOR } from './ui/style.js';
 import { makeButton } from './ui/button.js';
@@ -67,6 +67,6 @@ export default class BootScene extends Phaser.Scene {
 
   finish() {
     const state = bootState(this.registry);
-    this.scene.start(sceneForPhase(state.phase));
+    this.scene.start(sceneForState(state));
   }
 }

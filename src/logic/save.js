@@ -70,3 +70,16 @@ export function recordFind(state, id, deckSize) {
   const foundIds = [...state.foundIds, id];
   return { ...state, foundIds, phase: foundIds.length >= deckSize ? 'sort' : state.phase };
 }
+
+// 불러온 판 바로잡기: 묶기 이후 단계인데 필수 카드가 모자라면(저장을 손으로 고친 경우) 모으기로 되돌린다.
+// 결과 단계가 아닌데 bonusOpen이면 끈다. 바뀐 것이 없으면 같은 객체를 돌려준다.
+export function repairState(state, deckIds) {
+  let next = state;
+  const have = new Set(state.foundIds);
+  const complete = deckIds.every((id) => have.has(id));
+  if (state.phase !== 'collect' && !complete) {
+    next = { ...next, phase: 'collect', stage: null, placements: {}, bonusOpen: false };
+  }
+  if (next.bonusOpen && next.phase !== 'result') next = { ...next, bonusOpen: false };
+  return next;
+}

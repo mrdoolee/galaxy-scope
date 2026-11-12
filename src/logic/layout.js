@@ -58,3 +58,23 @@ export function mapZoneIds(deck, zones) {
   const used = new Set(deck.map((o) => o.zone));
   return zones.filter((z) => used.has(z.id)).map((z) => z.id);
 }
+
+// 보너스 모드 배치: 필수 카드는 zoneLayout과 똑같이 놓고(자리가 움직이지 않는다),
+// 보너스 천체는 따로 시드를 만든 두 번째 단계에서 모든 천체와 MIN_GAP 이상 떨어지게 놓는다.
+export function zoneLayoutWithBonus(seed, zoneId, deck, bonus) {
+  const placed = zoneLayout(seed, zoneId, deck);
+  const rng = makeRng(seedFor(seed, `bonus:${zoneId}`));
+  for (const o of bonus.filter((b) => b.zone === zoneId)) {
+    let spot = null;
+    for (let t = 0; t < MAX_TRIES && !spot; t++) {
+      const p = { x: X0 + rng() * (X1 - X0), y: Y0 + rng() * (Y1 - Y0) };
+      if (fits(p, placed)) spot = p;
+    }
+    // 무작위로 못 찾으면 안쪽 영역을 촘촘히 훑어 빈자리를 찾는다(순서가 정해져 있어 결과는 늘 같다).
+    for (let y = Y0; y <= Y1 && !spot; y += 50) {
+      for (let x = X0; x <= X1 && !spot; x += 50) if (fits({ x, y }, placed)) spot = { x, y };
+    }
+    placed.push({ id: o.id, ...(spot ?? { x: (X0 + X1) / 2, y: (Y0 + Y1) / 2 }) });
+  }
+  return placed;
+}

@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { ZONES } from '../data/zones.js';
-import { MAP_TEXT, SCAN_TEXT } from '../data/copy.js';
+import { OBJECTS } from '../data/objects.js';
+import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT } from '../data/copy.js';
 import { mapZoneIds } from '../logic/layout.js';
 import { openZones } from '../logic/requests.js';
+import { inBonus, bonusProgress } from '../logic/bonus.js';
 import { DECK, DECK_SIZE, getState, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
-import { onPress, MIN_TOUCH } from './ui/button.js';
-import { remainingTargets, plainLooks, addRequestThumbs } from './ui/request.js';
+import { onPress, MIN_TOUCH, makeButton } from './ui/button.js';
+import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
+import { ensureBonusPhotos } from './ui/bonusPhotos.js';
 
 const HEADER_H = 106;
 const LABEL_DY = 60; // 표시 가운데에서 이름표 가운데까지(터치 대상 아래 4px 띄우고 24px 높이)
@@ -24,23 +27,35 @@ export default class SkyMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.bonus = inBonus(getState(this));
+    addBackdrop(this, 0x5c6684); // 별자리 선과 이름표가 배경 그림보다 앞에 보이게 어둡게
+    if (this.bonus) ensureBonusPhotos(this, () => this.build());
+    else this.build();
+  }
+
+  build() {
     const state = getState(this);
     const found = new Set(state.foundIds);
     const open = new Set(openZones(found.size, ZONES));
-    const shownIds = mapZoneIds(DECK, ZONES);
+    // 보너스 관측: 보너스 천체만 있는 구역까지 모두 보이고, 아직 못 찾은 천체가 있는 구역이 열려 있다.
+    const pool = this.bonus ? OBJECTS : DECK;
+    const shownIds = mapZoneIds(pool, ZONES);
     const request = refreshRequest(this);
 
-    addBackdrop(this, 0x5c6684); // 별자리 선과 이름표가 배경 그림보다 앞에 보이게 어둡게
     this.drawHeader(request, found);
 
     const g = this.add.graphics();
     for (const id of shownIds) {
       const zone = ZONES.find((z) => z.id === id);
-      const left = DECK.filter((o) => o.zone === id && !found.has(o.id)).length;
-      const status = !open.has(id) ? 'locked' : left === 0 ? 'done' : 'open';
+      const left = pool.filter((o) => o.zone === id && !found.has(o.id)).length;
+      const status = !this.bonus && !open.has(id) ? 'locked' : left === 0 ? 'done' : 'open';
       this.drawZone(g, zone, status, request?.zoneId === id);
     }
 
+    if (this.bonus) {
+      makeButton(this, 460, 652, { w: 280, h: 88, label: BONUS_TEXT.back, size: 28, onTap: () => this.scene.start(SCENES.RESULT) });
+      return;
+    }
     // 8장째에 새 구역이 열렸으면 한 번 알린다.
     const openShown = shownIds.filter((id) => open.has(id)).length;
     const seen = this.registry.get('seenOpenCount');
@@ -48,10 +63,26 @@ export default class SkyMapScene extends Phaser.Scene {
     this.registry.set('seenOpenCount', openShown);
   }
 
+  drawBonusHeader(request, found) {
+    const { found: n, total } = bonusProgress({ foundIds: [...found] }, OBJECTS);
+    addText(this, GAME_WIDTH - 28, HEADER_H / 2, BONUS_TEXT.count(n, total), { size: 30, bold: true, color: COLOR.textBrass, origin: [1, 0.5] });
+    const x = 122;
+    if (!request) {
+      addText(this, x, HEADER_H / 2, BONUS_TEXT.allDone, { size: 26, wrap: 760, origin: [0, 0.5] });
+      return;
+    }
+    addText(this, x, 20, termRequestText(request, OBJECTS), { size: 30, bold: true });
+    addText(this, x, 60, BONUS_TEXT.zoneHint(ZONES.find((z) => z.id === request.zoneId).nameKo), { size: 26, color: COLOR.textBrass });
+  }
+
   drawHeader(request, found) {
     addPlate(this, 8, 6, GAME_WIDTH - 16, HEADER_H - 10, 0.82);
     const agent = this.add.image(62, HEADER_H / 2, 'agent-hq');
     agent.setScale(92 / agent.width);
+    if (this.bonus) {
+      this.drawBonusHeader(request, found);
+      return;
+    }
     addText(this, GAME_WIDTH - 28, HEADER_H / 2, MAP_TEXT.count(found.size, DECK_SIZE), { size: 30, bold: true, color: COLOR.textBrass, origin: [1, 0.5] });
 
     const targets = remainingTargets(request, found, DECK);

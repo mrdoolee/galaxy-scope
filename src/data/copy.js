@@ -156,3 +156,18 @@ export const CREDITS_TEXT = {
   license: (l) => `라이선스: ${l}`,
   back: '돌아가기',
 };
+
+// 보너스 관측의 글. 분류가 끝난 뒤에만 나오므로 종류 이름을 써도 된다(하늘 지도와 훑기 화면에서 bonusOpen일 때만 쓴다).
+// 다섯 종류 이름은 모두 받침이 있어 "을"이 맞다.
+export const TERM_REQUEST = (typeNameKo) => `${typeNameKo}을 하나 더 찾아라`;
+
+export const BONUS_TEXT = {
+  open: '보너스 관측',
+  back: '결과 화면으로',
+  count: (n, total) => `보너스 ${n} / ${total}`,
+  galaxyType: '우리은하 밖에 있는 은하',
+  galaxyRequest: '우리은하 밖에 있는 은하를 찾아라',
+  zoneHint: (zone) => `의뢰 구역: ${zone}`,
+  allDone: '보너스 천체를 모두 찾았어요! 결과 화면으로 돌아가 보세요.',
+  loading: '보너스 사진을 불러오는 중…',
+};

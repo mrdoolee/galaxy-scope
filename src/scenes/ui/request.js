@@ -1,4 +1,4 @@
-import { PLAIN_REQUEST, plainLook } from '../../data/copy.js';
+import { PLAIN_REQUEST, plainLook, TERM_REQUEST, TYPE_INFO, BONUS_TEXT } from '../../data/copy.js';
 import { softTexture } from './photoTextures.js';
 
 // 의뢰 내용 그리기(하늘 지도 머리글, 훑기 화면 왼쪽 판이 같이 쓴다).
@@ -19,4 +19,10 @@ export function addRequestThumbs(scene, x, y, targets, size = 80, gap = 10) {
     const key = softTexture(scene, o.id, { size: 128, grain: 14, round: true });
     return scene.add.image(x + i * (size + gap) + size / 2, y + size / 2, key).setDisplaySize(size, size);
   });
+}
+
+// 보너스 용어 의뢰 문장: 종류 이름("방출 성운을 하나 더 찾아라") 또는 외부 은하.
+export function termRequestText(request, objects) {
+  const type = objects.find((o) => o.id === request.targetIds[0]).type;
+  return type === 'spiral' ? BONUS_TEXT.galaxyRequest : TERM_REQUEST(TYPE_INFO[type].nameKo);
 }

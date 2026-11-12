@@ -32,3 +32,13 @@ test('구역마다 별자리 선이 있고, 선은 별 번호를 가리키며 �
     }
   }
 });
+
+test('보너스 용어 의뢰 문장: 다섯 종류 이름은 모두 받침이 있어 "을"로 이어진다', async () => {
+  const { TERM_REQUEST, TYPE_INFO, BONUS_TEXT } = await import('../../src/data/copy.js');
+  for (const info of Object.values(TYPE_INFO)) {
+    const last = info.nameKo.charCodeAt(info.nameKo.length - 1);
+    expect((last - 0xac00) % 28).not.toBe(0); // 받침 있음
+    expect(TERM_REQUEST(info.nameKo)).toBe(`${info.nameKo}을 하나 더 찾아라`);
+  }
+  expect(BONUS_TEXT.galaxyType).toBe('우리은하 밖에 있는 은하');
+});

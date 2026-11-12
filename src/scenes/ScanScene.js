@@ -2,18 +2,20 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS } from '../config/balance.js';
 import { ZONES } from '../data/zones.js';
-import { SCAN_TEXT, MAP_TEXT } from '../data/copy.js';
-import { zoneLayout } from '../logic/layout.js';
+import { OBJECTS } from '../data/objects.js';
+import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, TYPE_INFO, REGISTRY_TEXT } from '../data/copy.js';
+import { zoneLayout, zoneLayoutWithBonus } from '../logic/layout.js';
 import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur } from '../logic/scan.js';
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
 import { recordFind } from '../logic/save.js';
+import { inBonus, recordBonusFind, bonusProgress } from '../logic/bonus.js';
 import { DECK, DECK_SIZE, getState, persist, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { makeCard } from './ui/card.js';
 import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
-import { remainingTargets, plainLooks, addRequestThumbs } from './ui/request.js';
+import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
 import { makeFocusSlider } from './ui/focusSlider.js';
 import { makeMiniMap } from './ui/miniMap.js';
 
@@ -48,7 +50,11 @@ export default class ScanScene extends Phaser.Scene {
     const state = getState(this);
     this.zone = ZONES.find((z) => z.id === this.zoneId);
     this.found = new Set(state.foundIds);
-    this.placed = zoneLayout(state.seed, this.zoneId, DECK);
+    this.bonus = inBonus(state);
+    this.pool = this.bonus ? OBJECTS : DECK; // 보너스 관측에서는 필수·보너스 천체를 모두 놓는다(찾은 것은 얼룩으로 보이지 않는다)
+    this.placed = this.bonus
+      ? zoneLayoutWithBonus(state.seed, this.zoneId, DECK, OBJECTS.filter((o) => !o.deck))
+      : zoneLayout(state.seed, this.zoneId, DECK);
     this.view = { x: ZONE_W / 2, y: ZONE_H / 2 };
     this.speed = 0;
     this.mode = 'sweep'; // sweep | focus | card
@@ -86,6 +92,7 @@ export default class ScanScene extends Phaser.Scene {
 
     this.smudges = new Map();
     for (const p of this.placed) {
+      if (this.found.has(p.id)) continue; // 이미 찾은 천체는 얼룩을 만들지 않는다
       const img = this.add.image(p.x, p.y, softTexture(this, p.id, { size: 128, grain: 8, gray: true, faint: true }));
       img.setDisplaySize(SMUDGE_SIZE, SMUDGE_SIZE).setAlpha(0);
       this.sky.add(img);
@@ -175,11 +182,16 @@ export default class ScanScene extends Phaser.Scene {
   refreshPanel() {
     const mine = this.placed.filter((p) => this.found.has(p.id)).length;
     this.zoneCountText.setText(SCAN_TEXT.zoneCount(mine, this.placed.length));
-    this.totalText.setText(MAP_TEXT.count(this.found.size, DECK_SIZE));
+    if (this.bonus) {
+      const { found, total } = bonusProgress({ foundIds: [...this.found] }, OBJECTS);
+      this.totalText.setText(BONUS_TEXT.count(found, total));
+    } else {
+      this.totalText.setText(MAP_TEXT.count(this.found.size, DECK_SIZE));
+    }
 
     this.requestBox.removeAll(true);
     const request = refreshRequest(this);
-    const targets = remainingTargets(request, this.found, DECK);
+    const targets = remainingTargets(request, this.found, this.pool);
     if (!request || targets.length === 0) return;
     if (request.zoneId !== this.zoneId) {
       const zoneName = ZONES.find((z) => z.id === request.zoneId).nameKo;
@@ -187,7 +199,9 @@ export default class ScanScene extends Phaser.Scene {
       return;
     }
     this.requestBox.add(addText(this, SIDE_X, 262, SCAN_TEXT.request, { size: 24, bold: true, color: COLOR.textBrass, origin: [0.5, 0] }));
-    if (request.kind === 'picture') {
+    if (request.kind === 'term') {
+      this.requestBox.add(addText(this, SIDE_X, 302, termRequestText(request, OBJECTS), { size: MIN_FONT, wrap: 220, align: 'center', origin: [0.5, 0] }));
+    } else if (request.kind === 'picture') {
       const size = 66;
       const w = targets.length * size + (targets.length - 1) * 8;
       this.requestBox.add(addRequestThumbs(this, SIDE_X - w / 2, 302, targets, size, 8));
@@ -327,10 +341,12 @@ export default class ScanScene extends Phaser.Scene {
   // ── 카드 얻기: 저장하고 "미확인 천체" 카드를 보여 준다
   capture(id) {
     this.mode = 'card';
-    const next = recordFind(getState(this), id, DECK_SIZE);
+    const state = getState(this);
+    // 보너스 천체는 점수와 단계에 영향을 주지 않는다: 단계는 그대로 두고 찾은 목록에만 넣는다.
+    const next = this.bonus ? recordBonusFind(state, id) : recordFind(state, id, DECK_SIZE);
     this.registry.set('state', next);
     this.found = new Set(next.foundIds);
-    const complete = next.phase === 'sort';
+    const complete = !this.bonus && next.phase === 'sort';
     persist(this);
 
     this.slider.release();
@@ -347,7 +363,9 @@ export default class ScanScene extends Phaser.Scene {
     const layer = this.add.container(0, 0);
     const dim = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x02040a, 0.8).setOrigin(0).setInteractive();
     layer.add(dim);
-    const card = makeCard(this, 470, 365, { id, height: 600, label: SCAN_TEXT.unknown });
+    const o = OBJECTS.find((x) => x.id === id);
+    // 보너스 카드는 곧바로 등록된다: 이름, 종류, 별자리, 거리를 보여 준다.
+    const card = makeCard(this, 470, 365, { id, height: 600, label: this.bonus ? o.nameKo : SCAN_TEXT.unknown });
     layer.add(card);
     card.setScale(0.6).setAlpha(0);
     this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 300, ease: 'Back.out' });
@@ -355,12 +373,26 @@ export default class ScanScene extends Phaser.Scene {
     const bx = 960;
     this.status.setText('');
     layer.add(addText(this, bx, 140, SCAN_TEXT.got, { size: 36, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
-    layer.add(addText(this, bx, 200, MAP_TEXT.count(this.found.size, DECK_SIZE), { size: 30, bold: true, origin: [0.5, 0.5] }));
+    if (this.bonus) {
+      const { found, total } = bonusProgress({ foundIds: [...this.found] }, OBJECTS);
+      layer.add(addText(this, bx, 200, BONUS_TEXT.count(found, total), { size: 30, bold: true, origin: [0.5, 0.5] }));
+      const typeName = o.group === 'galaxy' ? BONUS_TEXT.galaxyType : TYPE_INFO[o.type].nameKo;
+      layer.add(addText(this, bx, 262, typeName, { size: 34, bold: true, wrap: 520, align: 'center', origin: [0.5, 0.5] }));
+      layer.add(addText(this, bx, 322, REGISTRY_TEXT.constellation(this.zone.nameKo), { size: 28, origin: [0.5, 0.5] }));
+      layer.add(addText(this, bx, 366, REGISTRY_TEXT.distance(o.distanceLy), { size: 28, origin: [0.5, 0.5] }));
+    } else {
+      layer.add(addText(this, bx, 200, MAP_TEXT.count(this.found.size, DECK_SIZE), { size: 30, bold: true, origin: [0.5, 0.5] }));
+    }
     const close = () => layer.destroy();
     const zoneDone = this.placed.every((p) => this.found.has(p.id));
     if (complete) {
       layer.add(addText(this, bx, 300, SCAN_TEXT.allDone, { size: 26, wrap: 400, align: 'center', origin: [0.5, 0.5] }));
       layer.add(makeButton(this, bx, 460, { w: 320, h: 100, label: SCAN_TEXT.toSort, size: 30, onTap: () => this.scene.start(SCENES.SORT) }).container);
+      return;
+    }
+    if (this.bonus) {
+      if (!zoneDone) layer.add(makeButton(this, bx, 470, { w: 320, h: 100, label: SCAN_TEXT.next, size: 30, onTap: () => { close(); this.leaveFocus(); } }).container);
+      layer.add(makeButton(this, bx, zoneDone ? 500 : 590, { w: 320, h: 100, label: SCAN_TEXT.toMap, size: 28, onTap: () => this.scene.start(SCENES.SKY_MAP) }).container);
       return;
     }
     if (!zoneDone) {
