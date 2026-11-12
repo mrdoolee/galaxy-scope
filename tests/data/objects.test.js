@@ -18,7 +18,17 @@ test('사진 파일과 출처가 모두 있음', () => {
     expect(o.photo.pageUrl).toMatch(/^https:\/\//);
     expect(o.photo.credit.length).toBeGreaterThan(0);
     expect(o.photo.license.length).toBeGreaterThan(0);
+    expect(['ESO', 'NOIRLab', 'ESA/Hubble']).toContain(o.photo.agency);
   }
+});
+test('CC BY 4.0 사진에는 라이선스 주소가 있음', () => {
+  for (const o of OBJECTS) {
+    expect(o.photo.license).toBe('CC BY 4.0');
+    expect(o.photo.licenseUrl).toBe('https://creativecommons.org/licenses/by/4.0/');
+  }
+});
+test('파이프 성운은 B59만이 아니므로 "B59 등"', () => {
+  expect(OBJECTS.find((o) => o.id === 'b59').catalogId).toBe('B59 등');
 });
 test('교과서 지정 네 구역이 있음', () => {
   expect(ZONES.filter((z) => z.textbook).map((z) => z.id).sort()).toEqual(['orion', 'sagittarius', 'scorpius', 'taurus']);

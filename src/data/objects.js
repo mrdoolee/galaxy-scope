@@ -5,15 +5,17 @@ export const TYPES = ['emission', 'reflection', 'dark', 'open', 'globular'];
 
 const CHECKED_ON = '2026-11-12';
 const LICENSE = 'CC BY 4.0';
+const LICENSE_URL = 'https://creativecommons.org/licenses/by/4.0/';
 
+// agency: 불러오기 화면과 하늘 지도의 사진 출처 한 줄에 쓰는 기관 이름.
 function eso(id, credit) {
-  return { pageUrl: `https://www.eso.org/public/images/${id}/`, sourceUrl: `https://cdn.eso.org/images/large/${id}.jpg`, credit };
+  return { agency: 'ESO', pageUrl: `https://www.eso.org/public/images/${id}/`, sourceUrl: `https://cdn.eso.org/images/large/${id}.jpg`, credit };
 }
 function noirlab(id, credit) {
-  return { pageUrl: `https://noirlab.edu/public/images/${id}/`, sourceUrl: `https://storage.noirlab.edu/media/archives/images/large/${id}.jpg`, credit };
+  return { agency: 'NOIRLab', pageUrl: `https://noirlab.edu/public/images/${id}/`, sourceUrl: `https://storage.noirlab.edu/media/archives/images/large/${id}.jpg`, credit };
 }
 function hubble(id, credit) {
-  return { pageUrl: `https://esahubble.org/images/${id}/`, sourceUrl: `https://cdn.esahubble.org/archives/images/large/${id}.jpg`, credit };
+  return { agency: 'ESA/Hubble', pageUrl: `https://esahubble.org/images/${id}/`, sourceUrl: `https://cdn.esahubble.org/archives/images/large/${id}.jpg`, credit };
 }
 
 const GROUP_OF = { emission: 'nebula', reflection: 'nebula', dark: 'nebula', open: 'cluster', globular: 'cluster', spiral: 'galaxy' };
@@ -21,7 +23,7 @@ const GROUP_OF = { emission: 'nebula', reflection: 'nebula', dark: 'nebula', ope
 function obj(id, nameKo, catalogId, type, zone, distanceLy, deck, composite, source) {
   return {
     id, nameKo, catalogId, group: GROUP_OF[type], type, zone, distanceLy, deck, composite,
-    photo: { file: `photos/${id}.jpg`, ...source, license: LICENSE, edited: true, checkedOn: CHECKED_ON },
+    photo: { file: `photos/${id}.jpg`, ...source, license: LICENSE, licenseUrl: LICENSE_URL, edited: true, checkedOn: CHECKED_ON },
   };
 }
 
@@ -41,7 +43,7 @@ export const OBJECTS = [
   // ── 필수 20장: 암흑 성운
   obj('b33', '말머리성운', 'B33', 'dark', 'orion', 1300, true, true, eso('eso0202a', 'ESO')),
   obj('b68', '바너드 68', 'B68', 'dark', 'ophiuchus', 500, true, false, eso('eso0102a', 'ESO')),
-  obj('b59', '파이프 성운', 'B59', 'dark', 'ophiuchus', 600, true, false, eso('eso1233a', 'ESO')),
+  obj('b59', '파이프 성운', 'B59 등', 'dark', 'ophiuchus', 600, true, false, eso('eso1233a', 'ESO')),
   obj('b86', '바너드 86', 'B86', 'dark', 'sagittarius', 6000, true, true, eso('eso1307a', 'ESO')),
   // ── 필수 20장: 산개 성단
   obj('m45', '플레이아데스성단', 'M45', 'open', 'taurus', 450, true, true,

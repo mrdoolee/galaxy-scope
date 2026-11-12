@@ -11,6 +11,7 @@ import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { onPress, MIN_TOUCH, makeButton } from './ui/button.js';
 import { remainingTargets, plainLooks, addRequestThumbs, termRequestText } from './ui/request.js';
 import { ensureBonusPhotos } from './ui/bonusPhotos.js';
+import { addAttribution } from './ui/attribution.js';
 
 const HEADER_H = 106;
 const LABEL_DY = 60; // 표시 가운데에서 이름표 가운데까지(터치 대상 아래 4px 띄우고 24px 높이)
@@ -35,6 +36,8 @@ export default class SkyMapScene extends Phaser.Scene {
     }
     this.bonus = inBonus(getState(this));
     addBackdrop(this, 0x5c6684); // 별자리 선과 이름표가 배경 그림보다 앞에 보이게 어둡게
+    // 오른쪽 아래, 에리다누스자리 이름표와 용골자리·큰부리새자리 사이의 빈 곳
+    addAttribution(this, GAME_WIDTH - 12, 492, { origin: [1, 0], wrap: 360, align: 'right' });
     if (!this.bonus) {
       this.build();
       return;

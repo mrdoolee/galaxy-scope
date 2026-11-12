@@ -130,20 +130,27 @@ export default class RegistryScene extends Phaser.Scene {
     this.page.add(addText(this, 32, 74, REGISTRY_TEXT.zonesLine, { size: 30, bold: true, origin: [0, 0.5] }));
     this.page.add(makeButton(this, 1142, 56, { w: 252, h: 96, label: REGISTRY_TEXT.toResult, size: 30, onTap: () => this.toResult() }).container);
 
-    const groups = zoneGroups(this.cards, ZONES).slice(0, 4);
-    const pw = 624;
-    const ph = 296;
+    // 거리 차가 큰 별자리만, 차가 큰 순서로(ZONE_GROUP_LIMIT개까지, 2×2 칸). 한 줄에 들어가면 칸을 세로로 키운다.
+    const groups = zoneGroups(this.cards, ZONES);
+    const cols = groups.length === 1 ? 1 : 2;
+    const rows = Math.ceil(groups.length / cols);
+    const top = 114;
+    const pw = (GAME_WIDTH - 16 - (cols - 1) * 16) / cols;
+    const ph = (GAME_HEIGHT - top - 8 - (rows - 1) * 8) / rows;
+    // 카드 크기는 모든 칸에 같게: 가장 많은 칸의 한 장 자리(카드 너비 = 높이 × 2/3)와 칸 높이에 맞춘다.
+    const most = Math.max(...groups.map((g) => g.cards.length));
+    const cardH = Math.floor(Math.min(rows === 1 ? 260 : 140, (((pw - 24) / most) - 16) * 1.5));
     groups.forEach((g, i) => {
-      const px = 8 + (i % 2) * (pw + 16);
-      const py = 114 + Math.floor(i / 2) * (ph + 8);
+      const px = 8 + (i % cols) * (pw + 16);
+      const py = top + Math.floor(i / cols) * (ph + 8);
       this.page.add(addPlate(this, px, py, pw, ph, 0.9));
       this.page.add(addText(this, px + 22, py + 28, g.zone.nameKo, { size: 28, bold: true, color: COLOR.textBrass, origin: [0, 0.5] }));
       const slot = (pw - 24) / g.cards.length;
       g.cards.forEach((o, j) => {
         const cx = px + 12 + slot * (j + 0.5);
-        this.page.add(makeCard(this, cx, py + 132, { id: o.id, height: 140 }));
-        this.page.add(addText(this, cx, py + 210, o.nameKo, { size: 24, wrap: slot - 10, align: 'center', origin: [0.5, 0] }));
-        this.page.add(addText(this, cx, py + ph - 26, REGISTRY_TEXT.lightYears(o.distanceLy), { size: 26, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
+        this.page.add(makeCard(this, cx, py + 56 + cardH / 2, { id: o.id, height: cardH }));
+        this.page.add(addText(this, cx, py + 64 + cardH, o.nameKo, { size: 24, wrap: slot - 10, align: 'center', origin: [0.5, 0] }));
+        this.page.add(addText(this, cx, py + 136 + cardH, REGISTRY_TEXT.lightYears(o.distanceLy), { size: 26, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
       });
     });
   }

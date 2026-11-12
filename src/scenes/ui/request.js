@@ -21,7 +21,7 @@ export function addRequestThumbs(scene, x, y, targets, size = 80, gap = 10) {
   });
 }
 
-// 보너스 용어 의뢰 문장: 종류 이름("방출 성운을 하나 더 찾아라") 또는 외부 은하.
+// 보너스 용어 의뢰 문장: 종류 이름("방출 성운을 하나 더 찾아 주세요.") 또는 외부 은하.
 export function termRequestText(request, objects) {
   const type = objects.find((o) => o.id === request.targetIds[0]).type;
   return type === 'spiral' ? BONUS_TEXT.galaxyRequest : TERM_REQUEST(TYPE_INFO[type].nameKo);

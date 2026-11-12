@@ -34,12 +34,47 @@ describe('totalScore', () => {
 });
 
 describe('rankFor', () => {
-  it('경계값', () => {
+  it('경계값: 수석 4000, 정식 3500, 수습 0', () => {
     expect(rankFor(4800)).toBe('수석 연구원');
     expect(rankFor(4000)).toBe('수석 연구원');
     expect(rankFor(3999)).toBe('정식 연구원');
-    expect(rankFor(2800)).toBe('정식 연구원');
-    expect(rankFor(2799)).toBe('수습 연구원');
+    expect(rankFor(3500)).toBe('정식 연구원');
+    expect(rankFor(3499)).toBe('수습 연구원');
+    expect(rankFor(2800)).toBe('수습 연구원');
     expect(rankFor(0)).toBe('수습 연구원');
+  });
+
+  it('결과 화면에 오는 판(20장, 다섯 종류)의 최저점 2800은 수습 연구원이다', () => {
+    const floor = totalScore({
+      found: 20,
+      typesRegistered: 5,
+      stages: [
+        { cardCount: 20, hintLevel: 3, wrongSubmits: 9 },
+        { cardCount: 12, hintLevel: 3, wrongSubmits: 9 },
+        { cardCount: 8, hintLevel: 3, wrongSubmits: 9 },
+      ],
+    });
+    expect(floor).toBe(2800);
+    expect(rankFor(floor)).toBe('수습 연구원');
+  });
+
+  it('단계마다 한 번씩 틀리면 아직 수석, 두 번씩 틀리면 수습', () => {
+    const run = (w) => totalScore({
+      found: 20,
+      typesRegistered: 5,
+      stages: [20, 12, 8].map((cardCount) => ({ cardCount, hintLevel: w, wrongSubmits: w })),
+    });
+    expect(run(1)).toBe(4110);
+    expect(rankFor(run(1))).toBe('수석 연구원');
+    expect(run(2)).toBe(3420);
+    expect(rankFor(run(2))).toBe('수습 연구원');
+    // 1차 두 번, 2차 한 번씩: 340 + 390 + 250 + 2800 = 3780
+    const mixed = totalScore({
+      found: 20,
+      typesRegistered: 5,
+      stages: [{ cardCount: 20, hintLevel: 2, wrongSubmits: 2 }, { cardCount: 12, hintLevel: 1, wrongSubmits: 1 }, { cardCount: 8, hintLevel: 1, wrongSubmits: 1 }],
+    });
+    expect(mixed).toBe(3780);
+    expect(rankFor(mixed)).toBe('정식 연구원');
   });
 });

@@ -2,6 +2,7 @@
 // 모두 새 상태를 돌려주고 받은 상태는 바꾸지 않는다(저장은 장면이 한다).
 import { STAGES, judge, nextHintLevel } from './sorting.js';
 import { makeRng, seedFor } from './rng.js';
+import { HIGHLIGHT_MAX } from '../config/balance.js';
 
 export const STAGE_ORDER = ['shape', 'nebula', 'cluster'];
 
@@ -81,6 +82,19 @@ export function submitSort(state, cards) {
 
 export function finishRegistry(state) {
   return { ...state, phase: 'result' };
+}
+
+// 힌트 2단계부터 짚어 줄 어긋난 카드. 다 짚으면 찍기만으로 통과하므로 판정 한 번에 HIGHLIGHT_MAX장까지만,
+// 판 시드와 단계, 그 단계의 틀린 판정 횟수로 고른다(새로 고침해도 같고, 판정할 때마다 달라질 수 있다).
+export function pickHighlights(wrongIds, level, seed, stage, submitCount) {
+  if (level < 2) return [];
+  const rng = makeRng(seedFor(seed, `glow:${stage}:${submitCount}`));
+  const out = [...wrongIds];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out.slice(0, HIGHLIGHT_MAX);
 }
 
 // 카드 줄 순서. 자료 순서(종류별로 모여 있다)대로 늘어놓으면 답이 드러나므로 판마다 섞는다.

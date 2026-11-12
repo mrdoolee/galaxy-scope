@@ -67,7 +67,14 @@ describe('HINTS', () => {
   it('nebula 3단계와 모든 2단계는 정해진 문장', () => {
     expect(HINTS.nebula[2]).toBe('색 말고 밝은지 어두운지로 나눠 보세요.');
     for (const stage of Object.keys(STAGES)) expect(HINTS[stage][1]).toBe('이 카드는 다른 묶음과 더 닮았어요.');
-    expect(HINTS.shape[0]).toBe('이 묶음의 카드들, 별이 하나하나 보이나요?');
+    expect(HINTS.shape[0]).toBe('이 묶음의 카드들, 구름 같은 덩어리가 보이나요?');
+    expect(HINTS.shape[2]).toBe('뿌옇거나 검은 구름 덩어리가 있는 것과, 별들만 모여 있는 것으로 나눠 보세요.');
+  });
+  it('1차 힌트는 별 앞을 가린 검은 구름(암흑 성운)도 구름 쪽으로 이끈다', () => {
+    // 암흑 성운 사진에는 별이 가득하므로 "별이 하나하나 보이나요?"를 물으면 별 무리 쪽으로 간다.
+    expect(HINTS.shape[0]).not.toMatch(/별/);
+    expect(HINTS.shape[2]).toMatch(/검은/);
+    expect(HINTS.shape[2]).toMatch(/별들만/);
   });
   it('2차 1단계 질문은 3단계 기준의 양 끝말을 미리 말하지 않는다', () => {
     expect(HINTS.nebula[0]).not.toMatch(/어두|어둡/);

@@ -1,5 +1,6 @@
 import { newGame } from '../../src/logic/save.js';
-import { beginSort, stageCards, validPlacements, placeCard, submitSort, hintLevel, finishRegistry, shuffledIds } from '../../src/logic/sortFlow.js';
+import { beginSort, stageCards, validPlacements, placeCard, submitSort, hintLevel, finishRegistry, shuffledIds, pickHighlights } from '../../src/logic/sortFlow.js';
+import { HIGHLIGHT_MAX } from '../../src/config/balance.js';
 
 const o = (id, group, type) => ({ id, group, type });
 const CARDS = [o('a', 'nebula', 'emission'), o('b', 'nebula', 'dark'), o('c', 'cluster', 'open'), o('d', 'cluster', 'globular')];
@@ -121,6 +122,40 @@ describe('hintLevel', () => {
 describe('finishRegistry', () => {
   it('registry에서 result로', () => {
     expect(finishRegistry({ ...sorting(), phase: 'registry', stage: null }).phase).toBe('result');
+  });
+});
+
+describe('pickHighlights: 힌트 2단계부터 어긋난 카드를 짚되 한 번에 최대 3장', () => {
+  const wrong = ['w1', 'w2', 'w3', 'w4', 'w5', 'w6', 'w7', 'w8'];
+
+  it('힌트 0~1단계에서는 아무것도 짚지 않는다', () => {
+    expect(pickHighlights(wrong, 0, 5, 'shape', 1)).toEqual([]);
+    expect(pickHighlights(wrong, 1, 5, 'shape', 1)).toEqual([]);
+  });
+
+  it('2단계 이상: 어긋난 카드 중 HIGHLIGHT_MAX(3)장까지', () => {
+    expect(HIGHLIGHT_MAX).toBe(3);
+    for (const level of [2, 3]) {
+      const ids = pickHighlights(wrong, level, 5, 'shape', 2);
+      expect(ids).toHaveLength(3);
+      expect(new Set(ids).size).toBe(3);
+      for (const id of ids) expect(wrong).toContain(id);
+    }
+  });
+
+  it('어긋난 카드가 3장 이하면 모두', () => {
+    expect([...pickHighlights(['a', 'b'], 2, 5, 'shape', 2)].sort()).toEqual(['a', 'b']);
+    expect(pickHighlights([], 3, 5, 'shape', 2)).toEqual([]);
+  });
+
+  it('같은 시드, 단계, 판정 횟수면 같은 카드(새로 고침해도 같다)', () => {
+    expect(pickHighlights(wrong, 2, 7, 'nebula', 3)).toEqual(pickHighlights([...wrong], 2, 7, 'nebula', 3));
+  });
+
+  it('판정을 거듭하면 짚는 카드가 바뀔 수 있다', () => {
+    const picks = new Set();
+    for (let n = 2; n <= 12; n++) picks.add(pickHighlights(wrong, 3, 7, 'shape', n).slice().sort().join());
+    expect(picks.size).toBeGreaterThan(1);
   });
 });
 

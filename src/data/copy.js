@@ -10,10 +10,11 @@ export const BIN_LABELS = {
 
 // 힌트 단계별 문장: [질문, 어긋난 카드 짚기, 기준 제시]. 힌트 N단계는 HINTS[stage][N - 1].
 export const HINTS = {
+  // 암흑 성운 사진에는 앞뒤로 별이 가득하므로, "별이 보이나요?"가 아니라 구름 덩어리(뿌옇거나 검은)가 있는지를 묻는다.
   shape: [
-    '이 묶음의 카드들, 별이 하나하나 보이나요?',
+    '이 묶음의 카드들, 구름 같은 덩어리가 보이나요?',
     '이 카드는 다른 묶음과 더 닮았어요.',
-    '구름처럼 번져 보이는 것과 별이 하나하나 보이는 것으로 나눠 보세요.',
+    '뿌옇거나 검은 구름 덩어리가 있는 것과, 별들만 모여 있는 것으로 나눠 보세요.',
   ],
   nebula: [
     '이 묶음의 카드들, 얼마나 환하게 보이나요?',
@@ -37,6 +38,9 @@ export const PLAIN_REQUEST = {
 };
 
 // 불러오기, 하늘 지도, 구역 훑기 화면의 글. 묶기 전이므로 "성운", "성단"과 다섯 종류 이름을 쓰지 않는다.
+// 불러오기 화면과 하늘 지도 구석의 사진 출처 한 줄. 기관과 라이선스는 자료(objects.js)에서 모은다(logic/credits.js).
+export const PHOTO_ATTRIBUTION = (agencies, licenses) => `사진: ${agencies.join(' · ')} (${licenses.join(', ')}) · 자세한 출처는 결과 화면`;
+
 export const BOOT_TEXT = {
   loading: (pct) => `불러오는 중… ${pct}%`,
   failed: '사진을 불러오지 못했어요.',
@@ -150,23 +154,23 @@ export const RESULT_TEXT = {
 
 export const CREDITS_TEXT = {
   title: '사진 출처',
-  edited: '사진 크기를 줄여 사용함',
+  edited: '사진 크기를 줄이고 화면에 맞게 잘라 사용함',
   scroll: '위아래로 끌어 넘겨 보세요.',
   credit: (c) => `사진: ${c}`,
-  license: (l) => `라이선스: ${l}`,
+  license: (l, url) => (url ? `라이선스: ${l} (${url})` : `라이선스: ${l}`),
   back: '돌아가기',
 };
 
 // 보너스 관측의 글. 분류가 끝난 뒤에만 나오므로 종류 이름을 써도 된다(하늘 지도와 훑기 화면에서 bonusOpen일 때만 쓴다).
-// 다섯 종류 이름은 모두 받침이 있어 "을"이 맞다.
-export const TERM_REQUEST = (typeNameKo) => `${typeNameKo}을 하나 더 찾아라`;
+// 다섯 종류 이름은 모두 받침이 있어 "을"이 맞다. 다른 의뢰처럼 높임말로 부탁한다.
+export const TERM_REQUEST = (typeNameKo) => `${typeNameKo}을 하나 더 찾아 주세요.`;
 
 export const BONUS_TEXT = {
   open: '보너스 관측',
   back: '결과 화면으로',
   count: (n, total) => `보너스 ${n} / ${total}`,
   galaxyType: '우리은하 밖에 있는 은하',
-  galaxyRequest: '우리은하 밖에 있는 은하를 찾아라',
+  galaxyRequest: '우리은하 밖에 있는 은하를 찾아 주세요.',
   zoneHint: (zone) => `의뢰 구역: ${zone}`,
   allDone: '보너스 천체를 모두 찾았어요! 결과 화면으로 돌아가 보세요.',
   loading: '보너스 사진을 불러오는 중…',

@@ -16,4 +16,8 @@ export const UNLOCK_ALL_AT = 8;         // 8장 모으면 교과서 밖 구역 �
 export const REQUEST_SIZE = 3;
 export const SCORE = { find: 100, sortCard: 50, wrongSubmit: -30, allTypes: 300, full: 500 };
 export const HINT_MULT = [1, 0.7, 0.4, 0.2];   // 힌트 0~3단계
-export const RANKS = [{ min: 4000, name: '수석 연구원' }, { min: 2800, name: '정식 연구원' }, { min: 0, name: '수습 연구원' }];
+// 결과 화면에 오는 판(20장, 다섯 종류)은 묶기 점수가 0이어도 2800점이므로, 정식은 묶기 점수가 700점 넘어야 한다.
+export const RANKS = [{ min: 4000, name: '수석 연구원' }, { min: 3500, name: '정식 연구원' }, { min: 0, name: '수습 연구원' }];
+export const HIGHLIGHT_MAX = 3;         // 힌트 2단계부터 판정 한 번에 짚어 주는 어긋난 카드 수
+export const ZONE_MIN_RATIO = 1.5;      // 별자리별 보기: 가장 먼 것 / 가장 가까운 것이 이 이상인 별자리만
+export const ZONE_GROUP_LIMIT = 4;      // 별자리별 보기에 놓는 별자리 수(2×2 칸)

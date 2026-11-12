@@ -74,8 +74,13 @@ describe('도감, 결과, 출처 화면 글', () => {
     expect(REGISTRY_TEXT.lightYears(500)).toBe('500 광년');
   });
 
-  it('출처 화면에 "사진 크기를 줄여 사용함"이 있다', () => {
-    expect(CREDITS_TEXT.edited).toBe('사진 크기를 줄여 사용함');
+  it('출처 화면에 줄이고 잘랐다는 말이 있다', () => {
+    expect(CREDITS_TEXT.edited).toBe('사진 크기를 줄이고 화면에 맞게 잘라 사용함');
+  });
+
+  it('출처 화면의 라이선스 줄에 라이선스 주소가 함께 나온다', () => {
+    expect(CREDITS_TEXT.license('CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/'))
+      .toBe('라이선스: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)');
   });
 
   it('결과 화면 버튼', () => {

@@ -11,7 +11,7 @@ const HEADER_H = 116;
 const LIST_X = 40;
 const LIST_W = GAME_WIDTH - 80;
 
-// 사진 출처: 사진이 있는 천체마다 이름, 크레딧(줄이지 않고 그대로), 라이선스, 원문 페이지 주소. 끌어서 넘긴다.
+// 사진 출처: 사진이 있는 천체마다 이름, 크레딧(줄이지 않고 그대로), 라이선스와 그 주소, 원문 페이지 주소. 끌어서 넘긴다.
 export default class CreditsScene extends Phaser.Scene {
   constructor() {
     super(SCENES.CREDITS);
@@ -38,7 +38,7 @@ export default class CreditsScene extends Phaser.Scene {
         addText(this, LIST_X, y, name, { size: 28, bold: true, color: COLOR.textBrass, wrap: LIST_W }),
       ];
       let yy = y + parts[0].height + 6;
-      for (const [str, color] of [[CREDITS_TEXT.credit(o.photo.credit), COLOR.text], [CREDITS_TEXT.license(o.photo.license), COLOR.text], [o.photo.pageUrl, COLOR.textDim]]) {
+      for (const [str, color] of [[CREDITS_TEXT.credit(o.photo.credit), COLOR.text], [CREDITS_TEXT.license(o.photo.license, o.photo.licenseUrl), COLOR.text], [o.photo.pageUrl, COLOR.textDim]]) {
         const t = addText(this, LIST_X + 20, yy, str, { size: 24, color, wrap: LIST_W - 20 });
         parts.push(t);
         yy += t.height + 2;

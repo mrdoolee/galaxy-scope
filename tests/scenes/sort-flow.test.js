@@ -1,8 +1,8 @@
 // 장면 없이 로직만 이어 붙여 한 판의 묶기, 도감 등록, 결과를 흉내 낸다.
 import { newGame } from '../../src/logic/save.js';
-import { judge, correctBin, nextHintLevel } from '../../src/logic/sorting.js';
+import { judge, correctBin, nextHintLevel, STAGES } from '../../src/logic/sorting.js';
 import { totalScore, rankFor } from '../../src/logic/scoring.js';
-import { beginSort, stageCards, placeCard, submitSort, hintLevel, finishRegistry } from '../../src/logic/sortFlow.js';
+import { beginSort, stageCards, placeCard, submitSort, hintLevel, finishRegistry, pickHighlights } from '../../src/logic/sortFlow.js';
 import { scoreReport } from '../../src/logic/result.js';
 import { OBJECTS } from '../../src/data/objects.js';
 
@@ -96,5 +96,26 @@ describe('한 판의 묶기 흐름', () => {
     // 마구 찍은 만큼 깎인다: 1차는 힌트 3단계 배율과 오답 4번 감점
     expect(report.stages[0].points).toBe(Math.round(20 * 50 * 0.2 - 4 * 30));
     expect(report.total).toBeLessThan(4800);
+  });
+
+  it('모두 한 묶음에 넣고 짚어 주는 카드만 옮기며 찍으면 수습 연구원에 머문다', () => {
+    let s = beginSort(collected());
+    for (const stage of ['shape', 'nebula', 'cluster']) {
+      expect(s.stage).toBe(stage);
+      const [first, second] = STAGES[stage].bins;
+      s = placeAll(s, () => first);
+      for (let guard = 0; guard < 50; guard++) {
+        const r = submitSort(s, deck);
+        s = r.state;
+        if (r.outcome === 'correct') break;
+        const shown = pickHighlights(r.wrongIds, r.hintLevel, s.seed, stage, s.wrongSubmits[stage]);
+        expect(shown.length).toBeLessThanOrEqual(3);
+        for (const id of shown) s = placeCard(s, id, second, deck);
+      }
+    }
+    expect(s.phase).toBe('registry');
+    const report = scoreReport(finishRegistry(s), deck);
+    expect(report.total).toBeLessThan(3500);
+    expect(report.rank).toBe('수습 연구원');
   });
 });

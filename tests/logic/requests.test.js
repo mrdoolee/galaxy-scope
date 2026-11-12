@@ -3,6 +3,7 @@ import { makeRng } from '../../src/logic/rng.js';
 import { ZONES } from '../../src/data/zones.js';
 import { PLAIN_REQUEST } from '../../src/data/copy.js';
 import { OBJECTS } from '../../src/data/objects.js';
+import { termRequestText } from '../../src/scenes/ui/request.js';
 
 const deck = [
   ...['a1', 'a2', 'a3', 'a4', 'a5'].map((id) => ({ id, zone: 'orion', type: 'emission' })),
@@ -114,6 +115,15 @@ describe('makeTermRequest (실제 자료)', () => {
     const found = new Set(OBJECTS.filter((o) => !o.deck && o.type === 'globular').map((o) => o.id));
     expect(makeTermRequest('globular', found, OBJECTS, makeRng(1))).toBeNull();
     expect(makeTermRequest('nope', none, OBJECTS, makeRng(1))).toBeNull();
+  });
+});
+
+describe('termRequestText (보너스 의뢰 문장)', () => {
+  it('종류 이름 또는 외부 은하를 높임말로 부탁한다', () => {
+    const byType = (type) => OBJECTS.find((o) => !o.deck && o.type === type);
+    expect(termRequestText({ targetIds: [byType('emission').id] }, OBJECTS)).toBe('방출 성운을 하나 더 찾아 주세요.');
+    expect(termRequestText({ targetIds: [byType('globular').id] }, OBJECTS)).toBe('구상 성단을 하나 더 찾아 주세요.');
+    expect(termRequestText({ targetIds: [byType('spiral').id] }, OBJECTS)).toBe('우리은하 밖에 있는 은하를 찾아 주세요.');
   });
 });
 

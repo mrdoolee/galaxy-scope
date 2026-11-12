@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { STAGES } from '../logic/sorting.js';
-import { beginSort, stageCards, foundCards, validPlacements, placeCard, submitSort, hintLevel, shuffledIds, safeCount } from '../logic/sortFlow.js';
+import { beginSort, stageCards, foundCards, validPlacements, placeCard, submitSort, hintLevel, shuffledIds, safeCount, pickHighlights } from '../logic/sortFlow.js';
 import { binCell, rowSlotX, clampScroll, dropTarget, rectContains } from '../logic/sortLayout.js';
 import { createDrag, gestureKind } from '../logic/drag.js';
 import { BIN_LABELS, HINTS, SORT_TEXT, SORT_STAGE_TEXT } from '../data/copy.js';
@@ -235,8 +235,8 @@ export default class SortScene extends Phaser.Scene {
     }
     if (r.outcome === 'wrong') {
       this.bubble.say(HINTS[this.stage][r.hintLevel - 1], { hint: true });
-      // 어느 카드가 틀렸는지는 힌트 2단계부터만 보여 준다.
-      this.glowIds = r.hintLevel >= 2 ? new Set(r.wrongIds) : new Set();
+      // 어느 카드가 틀렸는지는 힌트 2단계부터, 판정 한 번에 몇 장만 보여 준다.
+      this.glowIds = new Set(pickHighlights(r.wrongIds, r.hintLevel, r.state.seed, this.stage, r.state.wrongSubmits[this.stage]));
       this.refreshGlows();
       return;
     }
