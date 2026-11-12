@@ -1,6 +1,6 @@
-import { layoutZone, zoneLayout, zoneLayoutWithBonus } from "../../src/logic/layout.js";
-import { OBJECTS } from "../../src/data/objects.js";
-import { ZONES } from "../../src/data/zones.js";
+import { layoutZone, zoneLayout, zoneLayoutWithBonus } from '../../src/logic/layout.js';
+import { OBJECTS } from '../../src/data/objects.js';
+import { ZONES } from '../../src/data/zones.js';
 import { makeRng } from '../../src/logic/rng.js';
 import { ZONE_W, ZONE_H, EDGE_MARGIN, MIN_GAP } from '../../src/config/balance.js';
 

@@ -1,7 +1,8 @@
-import { requestKind, makeRequest, openZones, makeTermRequest, currentTermRequest } from "../../src/logic/requests.js";
+import { requestKind, makeRequest, openZones, makeTermRequest, currentTermRequest } from '../../src/logic/requests.js';
 import { makeRng } from '../../src/logic/rng.js';
 import { ZONES } from '../../src/data/zones.js';
 import { PLAIN_REQUEST } from '../../src/data/copy.js';
+import { OBJECTS } from '../../src/data/objects.js';
 
 const deck = [
   ...['a1', 'a2', 'a3', 'a4', 'a5'].map((id) => ({ id, zone: 'orion', type: 'emission' })),
@@ -80,5 +81,77 @@ describe('PLAIN_REQUEST', () => {
     for (const s of Object.values(PLAIN_REQUEST)) {
       for (const w of ['성운', '성단', '방출', '반사', '암흑', '산개', '구상']) expect(s).not.toContain(w);
     }
+  });
+});
+
+describe('makeTermRequest (실제 자료)', () => {
+  const none = new Set();
+  for (const type of ['emission', 'reflection', 'dark', 'open', 'globular', 'spiral']) {
+    it(`${type}: 대상은 보너스(deck: false)이고 종류가 맞으며 한 구역에 모여 있다`, () => {
+      for (let seed = 1; seed <= 20; seed++) {
+        const r = makeTermRequest(type, none, OBJECTS, makeRng(seed));
+        expect(r.kind).toBe('term');
+        expect(r.targetIds.length).toBeGreaterThan(0);
+        for (const id of r.targetIds) {
+          const o = OBJECTS.find((x) => x.id === id);
+          expect(o.deck).toBe(false);
+          expect(o.type).toBe(type);
+          expect(o.zone).toBe(r.zoneId);
+        }
+      }
+    });
+  }
+
+  it('구상 성단 의뢰에는 필수 20장의 구상 성단이 들어가지 않는다', () => {
+    const deckGlobular = OBJECTS.filter((o) => o.deck && o.type === 'globular').map((o) => o.id);
+    for (let seed = 1; seed <= 20; seed++) {
+      const r = makeTermRequest('globular', none, OBJECTS, makeRng(seed));
+      for (const id of r.targetIds) expect(deckGlobular).not.toContain(id);
+    }
+  });
+
+  it('그 종류의 보너스를 다 찾았거나 없는 종류면 null', () => {
+    const found = new Set(OBJECTS.filter((o) => !o.deck && o.type === 'globular').map((o) => o.id));
+    expect(makeTermRequest('globular', found, OBJECTS, makeRng(1))).toBeNull();
+    expect(makeTermRequest('nope', none, OBJECTS, makeRng(1))).toBeNull();
+  });
+});
+
+describe('currentTermRequest (실제 자료)', () => {
+  const bonus = OBJECTS.filter((o) => !o.deck);
+
+  it('앞 의뢰의 대상이 남아 있으면 그대로 이어 간다', () => {
+    const a = currentTermRequest(null, new Set(), 5, OBJECTS);
+    expect(currentTermRequest(a, new Set(), 5, OBJECTS)).toBe(a);
+    if (a.targetIds.length > 1) {
+      const part = new Set([a.targetIds[0]]);
+      expect(currentTermRequest(a, part, 5, OBJECTS)).toBe(a);
+    }
+  });
+
+  it('찾을 때마다 종류를 돌려 가며, 보너스를 다 찾을 때까지 매번 미발견 보너스를 겨눈다', () => {
+    const found = new Set();
+    const types = [];
+    let req = null;
+    for (let guard = 0; guard < 50; guard++) {
+      req = currentTermRequest(req, found, 9, OBJECTS);
+      if (!req) break;
+      const o = OBJECTS.find((x) => x.id === req.targetIds[0]);
+      expect(o.deck).toBe(false);
+      expect(found.has(o.id)).toBe(false);
+      types.push(o.type);
+      found.add(o.id);
+    }
+    expect(found.size).toBe(bonus.length);
+    expect(new Set(types.slice(0, 6)).size).toBe(6); // 처음 여섯 번은 서로 다른 종류
+  });
+
+  it('보너스를 모두 찾으면 null', () => {
+    expect(currentTermRequest(null, new Set(bonus.map((o) => o.id)), 1, OBJECTS)).toBeNull();
+  });
+
+  it('같은 시드와 같은 진행이면 같은 의뢰(새로 고침해도 같다)', () => {
+    const found = new Set([bonus[0].id, bonus[3].id]);
+    expect(currentTermRequest(null, found, 42, OBJECTS)).toEqual(currentTermRequest(null, found, 42, OBJECTS));
   });
 });

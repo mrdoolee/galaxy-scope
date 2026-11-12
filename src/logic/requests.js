@@ -49,12 +49,16 @@ export function makeTermRequest(type, foundIds, objects, rng) {
 export const TERM_TYPES = ['emission', 'reflection', 'dark', 'open', 'globular', 'spiral'];
 
 // 지금 보여 줄 보너스 의뢰. 앞 의뢰의 대상이 남아 있으면 이어 가고, 아니면 아직 남은 종류를 돌아가며 낸다
-// (찾은 보너스 수로 차례를 정하고 판 시드로 구역을 뽑으므로 새로 고침해도 같다). 다 찾았으면 null.
+// (마지막으로 찾은 종류의 다음 차례를 내고 판 시드로 구역을 뽑으므로 새로 고침해도 같다). 다 찾았으면 null.
 export function currentTermRequest(prev, foundIds, seed, objects) {
   if (prev && prev.kind === 'term' && prev.targetIds.some((id) => !foundIds.has(id))) return prev;
   const left = TERM_TYPES.filter((t) => objects.some((o) => !o.deck && o.type === t && !foundIds.has(o.id)));
   if (left.length === 0) return null;
-  const bonusFound = objects.filter((o) => !o.deck && foundIds.has(o.id)).length;
-  const type = left[bonusFound % left.length];
+  // 마지막으로 찾은 보너스 천체의 종류 다음 차례부터, 아직 남은 첫 종류(찾은 순서는 Set의 삽입 순서).
+  const bonusById = new Map(objects.filter((o) => !o.deck).map((o) => [o.id, o]));
+  const lastFound = [...foundIds].filter((id) => bonusById.has(id)).pop();
+  const start = lastFound ? TERM_TYPES.indexOf(bonusById.get(lastFound).type) + 1 : 0;
+  const bonusFound = [...foundIds].filter((id) => bonusById.has(id)).length;
+  const type = Array.from({ length: TERM_TYPES.length }, (_, i) => TERM_TYPES[(start + i) % TERM_TYPES.length]).find((t) => left.includes(t));
   return makeTermRequest(type, foundIds, objects, makeRng(seedFor(seed, `term:${bonusFound}`)));
 }

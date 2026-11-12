@@ -81,3 +81,13 @@ test('구역의 터치 대상과 이름표가 서로 겹치지 않음', () => {
     }
   }
 });
+
+test('보너스 천체의 종류는 외부 은하이거나 TYPE_INFO에 있어, 어떤 보너스 카드도 빈 칸 없이 그려진다', async () => {
+  const { TYPE_INFO } = await import('../../src/data/copy.js');
+  for (const o of OBJECTS.filter((x) => !x.deck)) {
+    if (o.group === 'galaxy') continue; // 카드 글은 BONUS_TEXT.galaxyType
+    expect(TYPE_INFO[o.type], o.id).toBeDefined();
+    expect(TYPE_INFO[o.type].nameKo).toBeTruthy();
+  }
+  expect(OBJECTS.filter((x) => x.group === 'galaxy' && x.deck)).toHaveLength(0);
+});
