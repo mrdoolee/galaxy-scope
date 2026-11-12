@@ -1,7 +1,9 @@
 import { newGame } from '../../src/logic/save.js';
 import {
   nightLength, assignMission, tickNight, isDawn, endDay, missionDone, completeMission, resumeNight, settleMission,
+  nightTotal, dayTimeline,
 } from '../../src/logic/night.js';
+import { DAY_WAIT_MS, DAY_FADE_MS, DUSK_HOLD_MS } from '../../src/config/balance.js';
 
 const req3 = { kind: 'picture', zoneId: 'orion', targetIds: ['a', 'b', 'c'] };
 const started = () => assignMission(newGame(1), req3);
@@ -131,6 +133,40 @@ describe('resumeNight', () => {
     expect(resumeNight(s, new Set(['a']))).toBe(s);
     const n = newGame(1);
     expect(resumeNight(n, new Set())).toBe(n);
+  });
+});
+
+describe('nightTotal', () => {
+  it('해가 뜨기 전에는 임무 대상 수로 정한 밤 길이', () => {
+    expect(nightTotal(tickNight(started(), 9000), new Set(['a']))).toBe(170000);
+  });
+  it('해가 뜬 뒤에는 그 밤에 받은 길이(남은 대상 수), 남은 시간보다 짧지 않다', () => {
+    const e = endDay({ ...started(), nightLeftMs: 0 }, new Set(['a']));
+    expect(nightTotal(e, new Set(['a']))).toBe(120000);
+    // 다음 밤에 하나 더 찾아 남은 대상이 하나가 되어도 막대가 1을 넘지 않게 남은 시간 이상
+    expect(nightTotal(e, new Set(['a', 'b']))).toBe(120000);
+  });
+  it('임무가 없으면 0', () => {
+    expect(nightTotal(newGame(1), new Set())).toBe(0);
+  });
+});
+
+describe('dayTimeline', () => {
+  it('밝아지고, 해가 DAY_WAIT_MS 동안 지나가고, 어두워진 뒤 잠깐 있다가 끝난다', () => {
+    expect(dayTimeline(0)).toEqual({ light: 0, sun: 0, dusk: false, done: false });
+    expect(dayTimeline(DAY_FADE_MS).light).toBe(1);
+    const mid = dayTimeline(DAY_WAIT_MS / 2);
+    expect(mid.light).toBe(1);
+    expect(mid.sun).toBeCloseTo(0.5);
+    expect(mid.dusk).toBe(false);
+    expect(dayTimeline(DAY_WAIT_MS - 1).dusk).toBe(false);
+    expect(dayTimeline(DAY_WAIT_MS)).toMatchObject({ light: 1, sun: 1, dusk: true, done: false });
+    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS / 2).light).toBeCloseTo(0.5);
+    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS)).toMatchObject({ light: 0, done: false });
+    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS + DUSK_HOLD_MS)).toMatchObject({ light: 0, sun: 1, dusk: true, done: true });
+  });
+  it('낮 기다림은 5초', () => {
+    expect(DAY_WAIT_MS).toBe(5000);
   });
 });
 

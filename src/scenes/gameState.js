@@ -59,6 +59,12 @@ export function persist(scene) {
   if (st) save(st, getState(scene));
 }
 
+// 새 상태를 registry에만 둔다(밤 시계처럼 매 프레임 바뀌는 값). 기기 저장은 persist가 따로 한다.
+export function stash(scene, state) {
+  scene.registry.set('state', state);
+  return state;
+}
+
 // 새 상태를 두고 곧바로 저장한다.
 export function commit(scene, state) {
   scene.registry.set('state', state);

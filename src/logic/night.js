@@ -1,4 +1,4 @@
-import { NIGHT_BASE_MS, NIGHT_PER_TARGET_MS } from '../config/balance.js';
+import { NIGHT_BASE_MS, NIGHT_PER_TARGET_MS, DAY_WAIT_MS, DAY_FADE_MS, DUSK_HOLD_MS } from '../config/balance.js';
 
 export function nightLength(targetCount) {
   return NIGHT_BASE_MS + targetCount * NIGHT_PER_TARGET_MS;
@@ -63,6 +63,29 @@ export function completeMission(state) {
 // 아니면 같은 객체. 어느 장면이 먼저 알아채도 같은 결과다.
 export function settleMission(state, foundIds) {
   return missionDone(state, foundIds) ? completeMission(state).state : state;
+}
+
+// 지금 밤의 전체 길이(시간 막대의 분모). 해가 뜨기 전에는 임무 대상 수로, 뜬 뒤에는 남은 대상 수로 받은 길이.
+// 다음 밤에 대상을 더 찾아도 막대가 넘치지 않게 남은 시간보다 짧지 않다. 임무가 없으면 0.
+export function nightTotal(state, foundIds) {
+  if (!state.mission) return 0;
+  const base = nightLength(state.dawned ? Math.max(1, remaining(state, foundIds)) : state.mission.targetIds.length);
+  return Math.max(base, state.nightLeftMs ?? 0);
+}
+
+// 낮 기다림의 흐름(경과 시간 → 보이는 모습). 하늘이 DAY_FADE_MS 동안 밝아지고(light 0→1), 해가 DAY_WAIT_MS 동안
+// 지나가며(sun 0→1), 그 뒤 DAY_FADE_MS 동안 어두워지고 DUSK_HOLD_MS만큼 "다시 밤" 말을 보여 준 뒤 끝난다.
+export function dayTimeline(elapsedMs) {
+  const t = Math.max(0, elapsedMs);
+  const clamp01 = (v) => Math.min(1, Math.max(0, v));
+  const rise = clamp01(t / DAY_FADE_MS);
+  const set = clamp01((t - DAY_WAIT_MS) / DAY_FADE_MS);
+  return {
+    light: Math.min(rise, 1 - set),
+    sun: clamp01(t / DAY_WAIT_MS),
+    dusk: t >= DAY_WAIT_MS,
+    done: t >= DAY_WAIT_MS + DAY_FADE_MS + DUSK_HOLD_MS,
+  };
 }
 
 // 불러온 뒤: 끝난 임무는 settleMission, 해가 뜬 채 저장됐으면 endDay.

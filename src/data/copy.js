@@ -80,7 +80,31 @@ export const SCAN_TEXT = {
   target: '찾을 천체',      // 왼쪽 판 머리글: 이 구역에서 지금 찾을 임무 대상 하나
   nextTarget: '다음',       // 임무 대상이 여럿일 때 넘겨 보는 버튼
   targetIndex: (i, n) => `${i} / ${n}`,
+  sharp: '초점이 맞았어요! 촬영 버튼을 누르세요.',
 };
+
+// 밤 시계, 해돋이, 임무 완료(훑기 화면). 묶기 전이므로 분류 용어를 쓰지 않는다.
+export const NIGHT_TEXT = {
+  nightLabel: (n) => `${n}째 밤`,
+  dawn: '해가 떴어요. 낮에는 천체를 관측할 수 없어요. 밤이 될 때까지 기다려야 해요.',
+  dusk: '다시 밤이 되었어요. 이어서 찾아봐요.',
+  tonight: (k) => `오늘 밤 찍은 카드 ${k}장`,
+  missionEarly: `동트기 전에 임무를 마쳤어요!`,
+  missionDone: '임무를 마쳤어요.',
+  toNextMission: '다음 임무 받기',
+  shutter: '촬영',
+  earlyBonus: (points) => `보너스 +${points}점`,
+};
+
+// 카드를 얻는 화면의 별점 한 줄: 무엇으로 별을 얻었는지.
+export const RATING_TEXT = {
+  both: '가운데도 초점도 아주 정확해요!',
+  center: '가운데에 잘 맞췄어요.',
+  focus: '초점이 아주 정확해요.',
+  base: '가운데와 초점을 더 맞추면 별이 늘어요.',
+};
+export const ratingLine = ({ center, focus }) =>
+  RATING_TEXT[center && focus ? 'both' : center ? 'center' : focus ? 'focus' : 'base'];
 
 // 쉬운 말 의뢰 문장에서 "…것"까지만 떼어 여러 대상을 한 줄로 보여 줄 때 쓴다.
 export const plainLook = (sentence) => sentence.replace(/을 찾아 주세요\.$/, '');

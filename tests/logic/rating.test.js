@@ -1,5 +1,5 @@
 import { newGame } from '../../src/logic/save.js';
-import { rateCapture, recordRating } from '../../src/logic/rating.js';
+import { rateCapture, captureRating, recordRating } from '../../src/logic/rating.js';
 
 describe('rateCapture', () => {
   it('중심과 초점 두 가지로 1~3개', () => {
@@ -11,6 +11,16 @@ describe('rateCapture', () => {
   it('경계값은 좋은 쪽', () => {
     expect(rateCapture(35, 0.03)).toBe(3);
     expect(rateCapture(35.1, 0.031)).toBe(1);
+  });
+});
+
+describe('captureRating', () => {
+  it('별 수와 함께 무엇으로 별을 더 얻었는지 알려 준다(rateCapture와 같은 수)', () => {
+    expect(captureRating(30, 0.02)).toEqual({ stars: 3, center: true, focus: true });
+    expect(captureRating(30, 0.07)).toEqual({ stars: 2, center: true, focus: false });
+    expect(captureRating(80, 0.02)).toEqual({ stars: 2, center: false, focus: true });
+    expect(captureRating(80, 0.07)).toEqual({ stars: 1, center: false, focus: false });
+    for (const [c, f] of [[35, 0.03], [35.1, 0.031], [0, 0], [200, 0.08]]) expect(captureRating(c, f).stars).toBe(rateCapture(c, f));
   });
 });
 

@@ -1,4 +1,11 @@
-import { clampView, viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection } from '../../src/logic/scan.js';
+import { clampView, viewState, visibleSmudges, lockTarget, focusError, isSharp, nudgeDirection } from '../../src/logic/scan.js';
+import * as balance from '../../src/config/balance.js';
+
+const { FOCUS_TOLERANCE } = balance;
+
+test('초점을 머물러 맞추던 시간(FOCUS_HOLD_MS)은 없다: 촬영 버튼으로 찍는다', () => {
+  expect('FOCUS_HOLD_MS' in balance).toBe(false);
+});
 
 const view = { x: 1000, y: 800 };
 const at = (id, dx, dy = 0) => ({ id, x: view.x + dx, y: view.y + dy });
@@ -41,11 +48,16 @@ describe('lockTarget', () => {
   });
 });
 
-describe('focusProgress', () => {
-  it('허용 오차 안에서 충분히 유지하면 촬영', () => {
-    expect(focusProgress(0.55, 0.5, 500)).toEqual({ sharp: true, captured: true });
-    expect(focusProgress(0.55, 0.5, 300)).toEqual({ sharp: true, captured: false });
-    expect(focusProgress(0.7, 0.5, 900)).toEqual({ sharp: false, captured: false });
+describe('focusError, isSharp', () => {
+  it('오차는 눈금과 목표의 거리', () => {
+    expect(focusError(0.55, 0.5)).toBeCloseTo(0.05);
+    expect(focusError(0.4, 0.5)).toBeCloseTo(0.1);
+  });
+  it('허용 오차 안이면 촬영할 수 있다(머무는 시간은 보지 않는다)', () => {
+    expect(isSharp(0.55, 0.5)).toBe(true);
+    expect(isSharp(0.5 + FOCUS_TOLERANCE, 0.5)).toBe(true);
+    expect(isSharp(0.5 - FOCUS_TOLERANCE - 0.001, 0.5)).toBe(false);
+    expect(isSharp(0.7, 0.5)).toBe(false);
   });
 });
 

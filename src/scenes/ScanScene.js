@@ -1,20 +1,21 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
-import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS } from '../config/balance.js';
+import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS, NIGHT_SAVE_MS } from '../config/balance.js';
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
-import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, TYPE_INFO, REGISTRY_TEXT } from '../data/copy.js';
+import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, NIGHT_TEXT } from '../data/copy.js';
 import { chartLayout, chartGuides } from '../logic/chart.js';
 import { startGuide, zoneClues } from '../logic/guide.js';
-import { viewState, visibleSmudges, lockTarget, focusProgress, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
+import { viewState, visibleSmudges, lockTarget, isSharp, focusError, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
-import { recordFind } from '../logic/save.js';
-import { inBonus, recordBonusFind, bonusProgress } from '../logic/bonus.js';
-import { DECK, DECK_IDS, DECK_SIZE, getState, persist, refreshRequest } from './gameState.js';
+import { inBonus, bonusProgress } from '../logic/bonus.js';
+import { tickNight, isDawn, endDay, nightTotal } from '../logic/night.js';
+import { captureRating } from '../logic/rating.js';
+import { recordCapture } from '../logic/capture.js';
+import { DECK, DECK_IDS, DECK_SIZE, getState, persist, commit, stash, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
-import { makeCard } from './ui/card.js';
 import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
 import { remainingTargets } from './ui/request.js';
 import { makeFocusSlider } from './ui/focusSlider.js';
@@ -22,6 +23,9 @@ import { makeMiniMap } from './ui/miniMap.js';
 import { addChartSky } from './ui/chartSky.js';
 import { makeTargetPanel, panelTargets } from './ui/targetPanel.js';
 import { addBackdropPiece } from './ui/backdrop.js';
+import { makeNightBar } from './ui/nightBar.js';
+import { runDayWait } from './ui/dayWait.js';
+import { showCaptureCard } from './ui/captureCard.js';
 
 const CX = GAME_WIDTH / 2;
 const CY = GAME_HEIGHT / 2;
@@ -64,8 +68,10 @@ export default class ScanScene extends Phaser.Scene {
     const start = startGuide(chartGuides(this.zoneId), this.placed, this.found);
     this.view = start ? clampView(start.x, start.y) : { x: ZONE_W / 2, y: ZONE_H / 2 };
     this.speed = 0;
-    this.mode = 'sweep'; // sweep | focus | card
+    this.mode = 'sweep'; // sweep | focus | card | day
     this.idleMs = 0;
+    this.sinceSave = 0;   // 밤 시계를 마지막으로 기기에 저장한 뒤 지난 시간
+    this.tonightIds = []; // 이 밤에 찍은 카드(낮 기다림에 보여 준다. 새로 고침하면 비어도 된다)
     this.moved = false;
     this.lockId = undefined; // 첫 프레임에 확대 버튼과 조준 원을 그리게
     this.drag = createDrag();
@@ -77,6 +83,7 @@ export default class ScanScene extends Phaser.Scene {
     this.buildHud();
     this.bindInput();
     this.refreshPanel();
+    this.showNight();
   }
 
   // ── 구역 하늘: 시드 난수로 찍은 별 + 별자리(선, 밝은 별, 길잡이 이름표) + 천체 자리의 흐린 얼룩
@@ -152,7 +159,7 @@ export default class ScanScene extends Phaser.Scene {
 
   // ── 망원경 틀: 구멍 밖은 틀과 양옆 배경 띠가 모두 가린다
   buildFrame() {
-    this.add.image(CX, CY, 'eyepiece-frame').setOrigin(HOLE.cx / HOLE.size, HOLE.cy / HOLE.size).setScale(FRAME_SCALE);
+    this.frame = this.add.image(CX, CY, 'eyepiece-frame').setOrigin(HOLE.cx / HOLE.size, HOLE.cy / HOLE.size).setScale(FRAME_SCALE);
     const strip = (x0, x1) => addBackdropPiece(this, { x: x0, y: 0, w: x1 - x0, h: GAME_HEIGHT }, 0x8a93a8);
     strip(0, Math.ceil(FRAME_LEFT) + 4);
     strip(Math.floor(FRAME_RIGHT) - 4, GAME_WIDTH);
@@ -170,12 +177,21 @@ export default class ScanScene extends Phaser.Scene {
     this.status = addText(this, CX, 46, SCAN_TEXT.start, { size: 26, bold: true, origin: [0.5, 0.5] });
 
     this.miniMap = makeMiniMap(this, RIGHT_X, 92, 200, this.placed, this.zoneId);
+    this.nightBar = makeNightBar(this, RIGHT_X, 234, 212);
     this.zoomBtn = makeButton(this, RIGHT_X, 560, {
       w: 200, h: 180, label: SCAN_TEXT.zoom, icon: 'icon-zoom', iconSize: 110, size: 28,
       onTap: () => this.enterFocus(),
     }).setEnabled(false);
-    this.cancelBtn = makeButton(this, RIGHT_X, 600, { w: 200, h: 96, label: SCAN_TEXT.cancel, onTap: () => this.leaveFocus() });
+    this.cancelBtn = makeButton(this, RIGHT_X, 380, { w: 200, h: 96, label: SCAN_TEXT.cancel, onTap: () => this.leaveFocus() });
     this.cancelBtn.container.setVisible(false);
+    // 촬영 버튼: 확대 버튼 자리(오른손 엄지가 닿는 곳, 왼손은 아래 눈금을 끈다). 초점이 맞을 때만 켜지고 빛나는 테가 돈다.
+    this.shutterBtn = makeButton(this, RIGHT_X, 560, {
+      w: 200, h: 180, label: NIGHT_TEXT.shutter, icon: 'icon-shutter', iconSize: 124, size: 28, onTap: () => this.shoot(),
+    }).setEnabled(false);
+    this.shutterGlow = this.add.graphics().lineStyle(7, COLOR.brassLight, 1).strokeCircle(0, -22, 74).setVisible(false);
+    this.shutterBtn.container.addAt(this.shutterGlow, 0);
+    this.tweens.add({ targets: this.shutterGlow, alpha: 0.3, duration: 450, yoyo: true, repeat: -1 });
+    this.shutterBtn.container.setVisible(false);
 
     this.slider = makeFocusSlider(this, CX, 670, 480);
     this.slider.container.setVisible(false);
@@ -201,16 +217,23 @@ export default class ScanScene extends Phaser.Scene {
     this.targetPanel.set(panelTargets(request, this.zoneId, this.found, this.clues), request?.kind ?? null);
   }
 
+  // 끌기와 초점 눈금 잡기를 모두 놓는다. 세로로 돌려 게임이 멈출 때(game pause), 창 전환(blur, hidden),
+  // 손가락이 화면 밖으로 나갈 때, 해가 뜨고 질 때 부른다. 멈춘 동안의 손가락은 다시 움직여도 끌기로 이어지지 않는다.
+  stopDrag() {
+    this.drag.cancel();
+    this.meter.reset(performance.now());
+    this.speed = 0;
+    this.slider.release();
+  }
+
   // ── 입력: 한 손가락 끌기. 두 번째 손가락, 화면 밖, 창 전환이면 끌기를 끝내고 속도 0.
   bindInput() {
     const now = () => performance.now();
-    // 끌기와 초점 눈금 잡기를 모두 놓는다. 세로로 돌려 게임이 멈출 때(game pause), 창 전환(blur, hidden),
-    // 손가락이 화면 밖으로 나갈 때 부른다. 멈춘 동안의 손가락은 다시 움직여도 끌기로 이어지지 않는다.
-    const stop = () => {
-      this.drag.cancel();
-      this.meter.reset(now());
-      this.speed = 0;
-      this.slider.release();
+    const stop = () => this.stopDrag();
+    // 게임이 멈추거나 창을 떠나면 밤 시계를 곧바로 저장한다(평소에는 NIGHT_SAVE_MS마다).
+    const halt = () => {
+      stop();
+      persist(this);
     };
     this.input.on('pointerdown', (p, over) => {
       if (this.mode !== 'sweep') return;
@@ -236,16 +259,74 @@ export default class ScanScene extends Phaser.Scene {
     this.input.on('pointerupoutside', up);
     this.input.on('gameout', stop);
     // main.js의 game.pause()는 게임의 'pause' 이벤트를 낸다(장면의 pause가 아니다).
-    const gameEvents = [['pause', stop], ['blur', stop], ['hidden', stop]];
+    const gameEvents = [['pause', halt], ['blur', halt], ['hidden', halt]];
     for (const [ev, fn] of gameEvents) this.game.events.on(ev, fn);
+    const leave = () => persist(this); // 새로 고침, 탭 닫기
+    window.addEventListener('pagehide', leave);
     this.events.once('shutdown', () => {
       for (const [ev, fn] of gameEvents) this.game.events.off(ev, fn);
+      window.removeEventListener('pagehide', leave);
+      persist(this);
     });
   }
 
   update(_time, delta) {
+    if (this.mode === 'sweep' || this.mode === 'focus') this.tickClock(delta);
     if (this.mode === 'sweep') this.updateSweep(delta);
-    else if (this.mode === 'focus') this.updateFocus(delta);
+    else if (this.mode === 'focus') this.updateFocus();
+  }
+
+  // ── 밤 시계: 모으기 중 훑기·초점 상태에서만 간다(카드 화면, 낮, 보너스 관측, 게임이 멈춘 동안은 update가 오지 않거나 건너뛴다).
+  // 임무 구역이 아니어도 간다(어느 구역을 보든 밤은 지나간다). 매 프레임 registry에 두고 NIGHT_SAVE_MS마다 기기에 저장한다.
+  tickClock(delta) {
+    const state = getState(this);
+    if (this.bonus || state.phase !== 'collect' || !state.mission) return;
+    const next = stash(this, tickNight(state, delta));
+    this.sinceSave += delta;
+    if (this.sinceSave >= NIGHT_SAVE_MS) {
+      this.sinceSave = 0;
+      persist(this);
+    }
+    this.showNight();
+    // 초점을 맞추는 중에 시간이 다 되면 촬영하거나 그만둘 때까지 기다렸다가 훑기로 돌아오면 해가 뜬다.
+    if (this.mode === 'sweep' && isDawn(next)) this.startDay();
+  }
+
+  showNight() {
+    const state = getState(this);
+    const on = !this.bonus && !!state.mission;
+    this.nightBar.container.setVisible(on);
+    if (on) this.nightBar.set(state.nightLeftMs, nightTotal(state, this.found), state.night);
+  }
+
+  // ── 해돋이: 해가 뜬 순간(남은 밤 0)을 저장하고 낮 기다림. 새로 고침하면 불러올 때 resumeNight가 다음 밤으로 넘긴다.
+  startDay() {
+    this.mode = 'day';
+    this.stopDrag();
+    persist(this);
+    this.sinceSave = 0;
+    this.backBtn.setEnabled(false);
+    this.zoomBtn.setEnabled(false);
+    this.nudge.setVisible(false);
+    if (this.blurFx) this.blurFx.active = false;
+    this.status.setText('');
+    runDayWait(this, {
+      cardIds: this.tonightIds,
+      hole: { x: CX, y: CY, r: VIEW_RADIUS },
+      fade: [this.sky, this.reticle],
+      below: this.frame,
+      onDone: () => this.endDayWait(),
+    });
+  }
+
+  endDayWait() {
+    commit(this, endDay(getState(this), this.found));
+    this.tonightIds = [];
+    this.stopDrag();
+    this.mode = 'sweep';
+    this.backBtn.setEnabled(true);
+    this.lockId = undefined; // 다음 프레임에 확대 버튼과 조준 원을 다시 그린다
+    this.showNight();
   }
 
   updateSweep(delta) {
@@ -292,11 +373,12 @@ export default class ScanScene extends Phaser.Scene {
   enterFocus() {
     if (this.mode !== 'sweep' || !this.lockId) return;
     this.mode = 'focus';
-    this.drag.cancel();
-    this.speed = 0;
+    this.stopDrag();
     this.focusId = this.lockId;
     this.focusTargetValue = focusTarget(getState(this).seed, this.focusId);
-    this.heldMs = 0;
+    // 별점의 "가운데" 몫: 확대를 누른 순간 시야 가운데와 천체 사이 거리
+    const p = this.placed.find((q) => q.id === this.focusId);
+    this.centerOffset = Math.hypot(p.x - this.view.x, p.y - this.view.y);
     this.sky.setVisible(false);
     this.reticle.setVisible(false);
     this.nudge.setVisible(false);
@@ -305,7 +387,8 @@ export default class ScanScene extends Phaser.Scene {
     this.slider.container.setVisible(true);
     this.zoomBtn.container.setVisible(false);
     this.cancelBtn.container.setVisible(true);
-    this.status.setText(SCAN_TEXT.focusGuide);
+    this.shutterBtn.container.setVisible(true);
+    this.setShutter(false);
   }
 
   leaveFocus() {
@@ -316,84 +399,66 @@ export default class ScanScene extends Phaser.Scene {
     this.sky.setVisible(true);
     this.reticle.setVisible(true);
     this.cancelBtn.container.setVisible(false);
+    this.shutterBtn.container.setVisible(false);
     this.zoomBtn.container.setVisible(true);
     this.backBtn.setEnabled(true);
     this.lockId = undefined; // 다음 프레임에 버튼과 조준 원을 다시 그린다
   }
 
-  updateFocus(delta) {
+  updateFocus() {
     const value = this.slider.value;
-    const blur = focusBlur(value, this.focusTargetValue);
-    this.sharp.setAlpha((1 - blur) ** 2);
-    const { sharp } = focusProgress(value, this.focusTargetValue, this.heldMs);
-    this.heldMs = sharp ? this.heldMs + delta : 0;
-    if (focusProgress(value, this.focusTargetValue, this.heldMs).captured) this.capture(this.focusId);
+    this.sharp.setAlpha((1 - focusBlur(value, this.focusTargetValue)) ** 2);
+    const on = isSharp(value, this.focusTargetValue);
+    if (on !== this.shutterBtn.enabled) this.setShutter(on);
   }
 
-  // ── 카드 얻기: 저장하고 "미확인 천체" 카드를 보여 준다
-  capture(id) {
+  // 촬영 버튼 켜고 끄기: 켜질 때 빛나는 테와 한 번 튀는 움직임, 안내 글로 알린다.
+  setShutter(on) {
+    this.shutterBtn.setEnabled(on);
+    this.shutterGlow.setVisible(on);
+    this.status.setText(on ? SCAN_TEXT.sharp : SCAN_TEXT.focusGuide);
+    if (on) this.tweens.add({ targets: this.shutterBtn.container, scale: { from: 1.15, to: 1 }, duration: 260, ease: 'Back.out' });
+  }
+
+  shoot() {
+    if (this.mode !== 'focus' || !isSharp(this.slider.value, this.focusTargetValue)) return;
+    this.capture(this.focusId, captureRating(this.centerOffset, focusError(this.slider.value, this.focusTargetValue)));
+  }
+
+  // ── 카드 얻기: 찾은 목록·별점·임무 완료를 한 번에 저장하고 "미확인 천체" 카드를 보여 준다
+  capture(id, rating) {
     this.mode = 'card';
     // 카드가 뜰 때까지(0.65초) 「지도로」를 끈다. 카드 화면의 버튼으로만 나간다.
     this.backBtn.setEnabled(false);
-    const state = getState(this);
-    // 보너스 천체는 점수와 단계에 영향을 주지 않는다: 단계는 그대로 두고 찾은 목록에만 넣는다.
-    const next = this.bonus ? recordBonusFind(state, id) : recordFind(state, id, DECK_IDS);
-    this.registry.set('state', next);
-    this.found = new Set(next.foundIds);
-    const complete = !this.bonus && next.phase === 'sort';
-    persist(this);
+    const result = recordCapture(getState(this), { id, stars: rating.stars, bonus: this.bonus, deckIds: DECK_IDS });
+    commit(this, result.state);
+    this.sinceSave = 0;
+    this.found = new Set(result.state.foundIds);
+    this.tonightIds.push(id);
 
     this.slider.release();
     this.slider.container.setVisible(false);
     this.cancelBtn.container.setVisible(false);
+    this.shutterBtn.container.setVisible(false);
     this.status.setText(SCAN_TEXT.got);
     this.idleMs = 0;
-    this.refreshPanel();
+    this.refreshPanel(); // 임무를 마쳤으면 여기서 다음 임무가 정해진다(완료는 위에서 이미 반영해 두 번 세지 않는다)
+    this.showNight();
     this.tweens.add({ targets: this.sharp, alpha: 1, duration: 250 });
-    this.time.delayedCall(650, () => this.showCard(id, complete));
+    this.time.delayedCall(650, () => this.showCard(id, rating, result));
   }
 
-  showCard(id, complete) {
-    const layer = this.add.container(0, 0);
-    const dim = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x02040a, 0.8).setOrigin(0).setInteractive();
-    layer.add(dim);
-    const o = OBJECTS.find((x) => x.id === id);
-    // 보너스 카드는 곧바로 등록된다: 이름, 종류, 별자리, 거리를 보여 준다.
-    const card = makeCard(this, 470, 365, { id, height: 600, label: this.bonus ? o.nameKo : SCAN_TEXT.unknown });
-    layer.add(card);
-    card.setScale(0.6).setAlpha(0);
-    this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 300, ease: 'Back.out' });
-
-    const bx = 960;
+  showCard(id, rating, { done, early, complete }) {
     this.status.setText('');
-    layer.add(addText(this, bx, 140, SCAN_TEXT.got, { size: 36, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] }));
-    if (this.bonus) {
-      const { found, total } = bonusProgress({ foundIds: [...this.found] }, OBJECTS);
-      layer.add(addText(this, bx, 200, BONUS_TEXT.count(found, total), { size: 30, bold: true, origin: [0.5, 0.5] }));
-      const typeName = o.group === 'galaxy' ? BONUS_TEXT.galaxyType : TYPE_INFO[o.type].nameKo;
-      layer.add(addText(this, bx, 262, typeName, { size: 34, bold: true, wrap: 520, align: 'center', origin: [0.5, 0.5] }));
-      layer.add(addText(this, bx, 322, REGISTRY_TEXT.constellation(this.zone.nameKo), { size: 28, origin: [0.5, 0.5] }));
-      layer.add(addText(this, bx, 366, REGISTRY_TEXT.distance(o.distanceLy), { size: 28, origin: [0.5, 0.5] }));
-    } else {
-      layer.add(addText(this, bx, 200, MAP_TEXT.count(this.found.size, DECK_SIZE), { size: 30, bold: true, origin: [0.5, 0.5] }));
-    }
-    const close = () => layer.destroy();
-    const zoneDone = this.placed.every((p) => this.found.has(p.id));
-    if (complete) {
-      layer.add(addText(this, bx, 300, SCAN_TEXT.allDone, { size: 26, wrap: 400, align: 'center', origin: [0.5, 0.5] }));
-      layer.add(makeButton(this, bx, 460, { w: 320, h: 100, label: SCAN_TEXT.toSort, size: 30, onTap: () => this.scene.start(SCENES.SORT) }).container);
-      return;
-    }
-    if (this.bonus) {
-      if (!zoneDone) layer.add(makeButton(this, bx, 470, { w: 320, h: 100, label: SCAN_TEXT.next, size: 30, onTap: () => { close(); this.leaveFocus(); } }).container);
-      layer.add(makeButton(this, bx, zoneDone ? 500 : 590, { w: 320, h: 100, label: SCAN_TEXT.toMap, size: 28, onTap: () => this.scene.start(SCENES.SKY_MAP) }).container);
-      return;
-    }
-    if (!zoneDone) {
-      layer.add(makeButton(this, bx, 380, { w: 320, h: 100, label: SCAN_TEXT.next, size: 30, onTap: () => { close(); this.leaveFocus(); } }).container);
-    } else {
-      layer.add(addText(this, bx, 300, SCAN_TEXT.zoneDone, { size: 26, origin: [0.5, 0.5] }));
-    }
-    layer.add(makeButton(this, bx, zoneDone ? 400 : 510, { w: 320, h: 100, label: SCAN_TEXT.toMap, size: 28, onTap: () => this.scene.start(SCENES.SKY_MAP) }).container);
+    const toMap = () => this.scene.start(SCENES.SKY_MAP);
+    const count = this.bonus ? bonusProgress({ foundIds: [...this.found] }, OBJECTS) : { found: this.found.size, total: DECK_SIZE };
+    const layer = showCaptureCard(this, {
+      id, bonus: this.bonus, zoneName: this.zone.nameKo, count, rating,
+      mission: done ? { early } : null, complete, zoneDone: this.placed.every((p) => this.found.has(p.id)),
+      onNext: () => { layer.destroy(); this.leaveFocus(); },
+      onMap: toMap,
+      onNextMission: toMap,
+      onSort: () => this.scene.start(SCENES.SORT),
+    });
   }
 }

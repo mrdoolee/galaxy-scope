@@ -1,4 +1,4 @@
-import { MAP_TEXT, SCAN_TEXT, BOOT_TEXT, PLAIN_REQUEST, PHOTO_ATTRIBUTION } from '../../src/data/copy.js';
+import { MAP_TEXT, SCAN_TEXT, BOOT_TEXT, PLAIN_REQUEST, PHOTO_ATTRIBUTION, NIGHT_TEXT, RATING_TEXT } from '../../src/data/copy.js';
 import { ZONES } from '../../src/data/zones.js';
 import { OBJECTS } from '../../src/data/objects.js';
 import { photoAgencies, photoLicenses } from '../../src/logic/credits.js';
@@ -11,8 +11,10 @@ function strings(obj) {
   return Object.values(obj).flatMap((v) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [v(3, 20), v('X', 2)] : strings(v)));
 }
 
-test('하늘 지도·훑기·불러오기 화면 글에 분류 용어가 없다', () => {
-  for (const s of [...strings(MAP_TEXT), ...strings(SCAN_TEXT), ...strings(BOOT_TEXT), ...strings(PLAIN_REQUEST)]) {
+test('하늘 지도·훑기·불러오기 화면 글(밤, 별점 포함)에 분류 용어가 없다', () => {
+  const night = [...strings(NIGHT_TEXT), ...strings(RATING_TEXT)];
+  expect(night.length).toBeGreaterThanOrEqual(12);
+  for (const s of [...strings(MAP_TEXT), ...strings(SCAN_TEXT), ...strings(BOOT_TEXT), ...strings(PLAIN_REQUEST), ...night]) {
     for (const w of BANNED) expect(s, s).not.toContain(w);
   }
 });

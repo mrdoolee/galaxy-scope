@@ -1,4 +1,4 @@
-import { ZONE_W, ZONE_H, VIEW_RADIUS, BLUR_SPEED, SMUDGE_SPEED, LOCK_RADIUS, FOCUS_TOLERANCE, FOCUS_HOLD_MS } from '../config/balance.js';
+import { ZONE_W, ZONE_H, VIEW_RADIUS, BLUR_SPEED, SMUDGE_SPEED, LOCK_RADIUS, FOCUS_TOLERANCE } from '../config/balance.js';
 import { makeRng, seedFor } from './rng.js';
 
 const dist = (view, p) => Math.hypot(p.x - view.x, p.y - view.y);
@@ -30,10 +30,11 @@ export function lockTarget(view, speed, placed, foundIds) {
   return best;
 }
 
-export function focusProgress(value, target, heldMs) {
-  const sharp = Math.abs(value - target) <= FOCUS_TOLERANCE;
-  return { sharp, captured: sharp && heldMs >= FOCUS_HOLD_MS };
-}
+// 초점 오차(0~1 눈금): 촬영 버튼을 누른 순간의 값으로 별점을 매긴다.
+export const focusError = (value, target) => Math.abs(value - target);
+
+// 허용 오차 안이면 촬영 버튼이 켜진다.
+export const isSharp = (value, target) => focusError(value, target) <= FOCUS_TOLERANCE;
 
 export function nudgeDirection(view, placed, foundIds) {
   let best = null;
