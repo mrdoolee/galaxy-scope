@@ -56,8 +56,8 @@ describe('한 판의 묶기 흐름', () => {
     const stages = ['shape', 'nebula', 'cluster'].map((st) => ({ cardCount: stageCards(st, deck).length, hintLevel: 0, wrongSubmits: 0 }));
     expect(totalScore({ found: 20, stages, typesRegistered: 5 })).toBe(4800);
     expect(report.total).toBe(4800);
-    expect(report.rank).toBe('수석 연구원');
-    expect(rankFor(report.total)).toBe('수석 연구원');
+    expect(report.rank).toBe('정식 연구원');
+    expect(rankFor(report.total)).toBe('정식 연구원');
   });
 
   it('1차에서 색으로 묶으면(푸른 반사 성운을 별 무리 쪽에) wrongIds가 나오고 힌트 1단계', () => {
@@ -115,7 +115,7 @@ describe('한 판의 묶기 흐름', () => {
     }
     expect(s.phase).toBe('registry');
     const report = scoreReport(finishRegistry(s), deck);
-    expect(report.total).toBeLessThan(3500);
+    expect(report.total).toBeLessThan(4200);
     expect(report.rank).toBe('수습 연구원');
   });
 });

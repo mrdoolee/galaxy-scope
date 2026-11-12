@@ -8,8 +8,19 @@ export function stageScore(cardCount, hintLevel, wrongSubmits) {
   return Math.max(0, Math.round(raw));
 }
 
-export function totalScore({ found, stages, typesRegistered }) {
-  let total = found * SCORE.find;
+// 별점 보너스: 필수 카드만, 별 1개를 넘는 별마다 SCORE.star. 별은 1~3으로 자른다.
+export function starPoints(ratings, deckIds) {
+  let total = 0;
+  for (const id of deckIds) {
+    const n = Number(ratings?.[id]);
+    if (!Number.isFinite(n)) continue;
+    total += (Math.min(3, Math.max(1, n)) - 1) * SCORE.star;
+  }
+  return total;
+}
+
+export function totalScore({ found, stages, typesRegistered, starBonus = 0, earlyMissions = 0 }) {
+  let total = found * SCORE.find + starBonus + earlyMissions * SCORE.earlyMission;
   for (const s of stages) total += stageScore(s.cardCount, s.hintLevel, s.wrongSubmits);
   if (typesRegistered === 5) total += SCORE.allTypes;
   if (isFull(found)) total += SCORE.full;

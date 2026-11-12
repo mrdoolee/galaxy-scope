@@ -1,4 +1,4 @@
-import { requestKind, makeRequest, openZones, makeTermRequest, currentTermRequest } from '../../src/logic/requests.js';
+import { requestKind, makeRequest, currentRequest, openZones, makeTermRequest, currentTermRequest } from '../../src/logic/requests.js';
 import { makeRng } from '../../src/logic/rng.js';
 import { ZONES } from '../../src/data/zones.js';
 import { PLAIN_REQUEST } from '../../src/data/copy.js';
@@ -13,21 +13,23 @@ const deck = [
 const foundN = (n) => new Set(Array.from({ length: n }, (_, i) => `x${i}`));
 
 describe('requestKind', () => {
-  it('4장 미만 none, 4~9 picture, 10 이상 plain', () => {
-    expect(requestKind(3)).toBe('none');
-    expect(requestKind(4)).toBe('picture');
+  it('처음부터 picture, 10장부터 plain', () => {
+    expect(requestKind(0)).toBe('picture');
     expect(requestKind(9)).toBe('picture');
     expect(requestKind(10)).toBe('plain');
   });
 });
 
 describe('makeRequest', () => {
-  it('4장 미만이면 null', () => {
-    expect(makeRequest(foundN(3), deck, ['orion'], makeRng(1))).toBeNull();
+  it('0장일 때도 임무를 낸다', () => {
+    const r = makeRequest(new Set(), deck, ['orion'], makeRng(1));
+    expect(r.kind).toBe('picture');
+    expect(r.zoneId).toBe('orion');
+    expect(r.targetIds).toHaveLength(3);
   });
 
   it('대상은 같은 구역, 미발견, 최대 3개', () => {
-    const f = foundN(4);
+    const f = foundN(0);
     for (let seed = 1; seed <= 20; seed++) {
       const r = makeRequest(f, deck, ['orion', 'taurus', 'virgo'], makeRng(seed));
       expect(r.kind).toBe('picture');
@@ -42,20 +44,20 @@ describe('makeRequest', () => {
   });
 
   it('구역에 남은 것이 2개면 2개', () => {
-    const f = new Set([...foundN(4), 'a1', 'a2', 'a3']);
+    const f = new Set([...foundN(0), 'a1', 'a2', 'a3']);
     const r = makeRequest(f, deck, ['orion'], makeRng(5));
     expect(r.zoneId).toBe('orion');
     expect([...r.targetIds].sort()).toEqual(['a4', 'a5']);
   });
 
   it('열린 구역에 남은 것이 없으면 null', () => {
-    const f = new Set([...foundN(4), 'b1', 'b2']);
+    const f = new Set([...foundN(0), 'b1', 'b2']);
     expect(makeRequest(f, deck, ['taurus'], makeRng(1))).toBeNull();
   });
 
   it('닫힌 구역의 카드는 고르지 않는다', () => {
     for (let seed = 1; seed <= 20; seed++) {
-      expect(makeRequest(foundN(4), deck, ['taurus'], makeRng(seed)).zoneId).toBe('taurus');
+      expect(makeRequest(foundN(0), deck, ['taurus'], makeRng(seed)).zoneId).toBe('taurus');
     }
   });
 
@@ -64,6 +66,22 @@ describe('makeRequest', () => {
     const b = makeRequest(foundN(10), deck, ['orion', 'taurus'], makeRng(9));
     expect(a).toEqual(b);
     expect(a.kind).toBe('plain');
+  });
+});
+
+describe('currentRequest', () => {
+  it('9장에서 받은 그림 임무는 10장이 되어도 대상이 남아 있으면 그대로 이어진다', () => {
+    const prev = { kind: 'picture', zoneId: 'orion', targetIds: ['a1', 'a2', 'a3'] };
+    expect(currentRequest(prev, foundN(10), 1, deck, ['orion'])).toBe(prev);
+  });
+  it('대상을 모두 찾았으면 새로 뽑는다', () => {
+    const prev = { kind: 'picture', zoneId: 'orion', targetIds: ['a1'] };
+    const r = currentRequest(prev, new Set(['a1']), 1, deck, ['orion']);
+    expect(r).not.toBe(prev);
+    expect(r.targetIds).not.toContain('a1');
+  });
+  it('임무가 없으면 처음부터 뽑는다', () => {
+    expect(currentRequest(null, new Set(), 1, deck, ['orion']).kind).toBe('picture');
   });
 });
 

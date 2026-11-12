@@ -1,4 +1,4 @@
-import { SAVE_KEY, newGame, load, save, clear, recordFind, repairState } from '../../src/logic/save.js';
+import { SAVE_KEY, newGame, load, save, clear, recordFind, repairState, withDefaults } from '../../src/logic/save.js';
 
 function fakeStorage(init = {}) {
   const m = new Map(Object.entries(init));
@@ -26,6 +26,13 @@ describe('newGame', () => {
       placements: {},
       wrongSubmits: { shape: 0, nebula: 0, cluster: 0 },
       bonusOpen: false,
+      mission: null,
+      night: 1,
+      nightLeftMs: null,
+      dawned: false,
+      earlyMissions: 0,
+      ratings: {},
+      introSeen: false,
     });
   });
 });
@@ -152,5 +159,93 @@ describe('repairState: 모으기 단계인데 필수 카드가 다 있으면', (
   it('하나라도 모자라면 그대로(같은 객체)', () => {
     const s = { ...newGame(4), foundIds: ['a', 'b', 'x'], phase: 'collect' };
     expect(repairState(s, DECK_IDS)).toBe(s);
+  });
+});
+
+const NEW_KEYS = ['mission', 'night', 'nightLeftMs', 'dawned', 'earlyMissions', 'ratings', 'introSeen'];
+const oldFormat = (extra = {}) => {
+  const s = { ...newGame(9), foundIds: ['a', 'b', 'c', 'd', 'e'], ...extra };
+  for (const k of NEW_KEYS) if (!(k in extra)) delete s[k];
+  return s;
+};
+const loadOf = (obj) => load(fakeStorage({ [SAVE_KEY]: JSON.stringify(obj) }));
+
+describe('load: 예전 저장(새 항목 없음)', () => {
+  it('찾은 카드는 그대로이고 새 항목은 기본값', () => {
+    const r = loadOf(oldFormat());
+    expect(r.foundIds).toEqual(['a', 'b', 'c', 'd', 'e']);
+    const fresh = newGame(9);
+    for (const k of NEW_KEYS) expect(r[k]).toEqual(fresh[k]);
+  });
+
+  it('여전히 필수 항목이 깨진 저장은 거부한다', () => {
+    expect(loadOf({ ...oldFormat(), foundIds: 'a' })).toBeNull();
+  });
+});
+
+describe('withDefaults: 이상한 값은 그 항목만 기본값으로', () => {
+  const okMission = { kind: 'plain', zoneId: 'orion', targetIds: ['a', 'b'] };
+  const cases = [
+    ['night 0', { night: 0 }, 'night', 1],
+    ['night 음수', { night: -3 }, 'night', 1],
+    ['night 문자열', { night: '2' }, 'night', 1],
+    ['night 소수', { night: 1.5 }, 'night', 1],
+    ['nightLeftMs 음수', { nightLeftMs: -5 }, 'nightLeftMs', null],
+    ['nightLeftMs NaN', { nightLeftMs: NaN }, 'nightLeftMs', null],
+    ['nightLeftMs 문자열', { nightLeftMs: '9' }, 'nightLeftMs', null],
+    ['dawned 숫자', { dawned: 1 }, 'dawned', false],
+    ['introSeen 문자열', { introSeen: 'yes' }, 'introSeen', false],
+    ['earlyMissions 음수', { earlyMissions: -1 }, 'earlyMissions', 0],
+    ['earlyMissions 소수', { earlyMissions: 0.5 }, 'earlyMissions', 0],
+    ['ratings 에 5', { ratings: { a: 5 } }, 'ratings', {}],
+    ['ratings 문자열', { ratings: { a: '2' } }, 'ratings', {}],
+    ['ratings 배열', { ratings: [] }, 'ratings', {}],
+    ['mission targetIds 빈 배열', { mission: { ...okMission, targetIds: [] } }, 'mission', null],
+    ['mission targetIds 4개', { mission: { ...okMission, targetIds: ['a', 'b', 'c', 'd'] } }, 'mission', null],
+    ['mission targetIds 숫자 섞임', { mission: { ...okMission, targetIds: ['a', 2] } }, 'mission', null],
+    ['mission kind 모르는 값', { mission: { ...okMission, kind: 'term' } }, 'mission', null],
+    ['mission zoneId 숫자', { mission: { ...okMission, zoneId: 3 } }, 'mission', null],
+    ['mission 문자열', { mission: 'x' }, 'mission', null],
+  ];
+  it.each(cases)('%s', (_name, patch, key, expected) => {
+    const r = loadOf(oldFormat(patch));
+    expect(r).not.toBeNull();
+    expect(r[key]).toEqual(expected);
+    // 다른 새 항목은 그대로 기본값, 필수 항목은 건드리지 않는다
+    expect(r.foundIds).toEqual(['a', 'b', 'c', 'd', 'e']);
+    for (const k of NEW_KEYS.filter((x) => x !== key)) expect(r[k]).toEqual(newGame(9)[k]);
+  });
+
+  it('올바른 값은 그대로 둔다', () => {
+    const good = { ...newGame(9), mission: okMission, night: 4, nightLeftMs: 0, dawned: true, earlyMissions: 2, ratings: { a: 3, b: 1 }, introSeen: true };
+    expect(loadOf(good)).toEqual(good);
+  });
+
+  it('고칠 것이 없으면 같은 객체, 입력은 바꾸지 않는다', () => {
+    const s = newGame(1);
+    expect(withDefaults(s)).toBe(s);
+    const broken = oldFormat({ night: -1 });
+    withDefaults(broken);
+    expect(broken.night).toBe(-1);
+  });
+});
+
+describe('repairState: 임무 정리', () => {
+  const m = { kind: 'picture', zoneId: 'orion', targetIds: ['a'] };
+  it('모으기로 되돌릴 때 임무와 밤을 비운다', () => {
+    const s = { ...newGame(4), foundIds: ['a'], phase: 'sort', mission: m, nightLeftMs: 5, dawned: true };
+    const r = repairState(s, ['a', 'b']);
+    expect(r.phase).toBe('collect');
+    expect(r.mission).toBeNull();
+    expect(r.nightLeftMs).toBeNull();
+    expect(r.dawned).toBe(false);
+  });
+  it('묶기로 올릴 때 임무와 밤을 비운다', () => {
+    const s = { ...newGame(4), foundIds: ['a', 'b'], mission: m, nightLeftMs: 5, dawned: true };
+    const r = repairState(s, ['a', 'b']);
+    expect(r.phase).toBe('sort');
+    expect(r.mission).toBeNull();
+    expect(r.nightLeftMs).toBeNull();
+    expect(r.dawned).toBe(false);
   });
 });

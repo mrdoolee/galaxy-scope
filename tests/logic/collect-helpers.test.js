@@ -49,8 +49,8 @@ describe('currentRequest', () => {
   const zones = ['orion', 'taurus', 'virgo'];
   const found = (...ids) => new Set(ids);
 
-  it('의뢰가 없을 때는 null', () => {
-    expect(currentRequest(null, found('x0', 'x1', 'x2'), 1, deck, zones)).toBeNull();
+  it('처음부터 임무가 나온다', () => {
+    expect(currentRequest(null, found('x0', 'x1', 'x2'), 1, deck, zones).kind).toBe('picture');
   });
 
   it('남은 대상이 있으면 같은 의뢰를 이어 간다', () => {
@@ -70,13 +70,16 @@ describe('currentRequest', () => {
     expect(next.targetIds.some((id) => !f.has(id))).toBe(true);
   });
 
-  it('쉬운 말 의뢰로 넘어갈 때가 되면 새 의뢰로 바뀐다', () => {
+  it('쉬운 말 임무로 넘어갈 때가 되어도 앞 임무의 대상이 남아 있으면 이어 간다', () => {
     const f = new Set(deck.slice(-PICTURE_UNTIL + 1).map((o) => o.id)); // 9장
     const r = currentRequest(null, f, 3, deck, zones);
     expect(r.kind).toBe('picture');
     const extra = deck.find((o) => !f.has(o.id) && !r.targetIds.includes(o.id));
     f.add(extra.id);
     expect(f.size).toBe(PICTURE_UNTIL);
+    expect(currentRequest(r, f, 3, deck, zones)).toBe(r);
+    // 대상을 다 찾은 뒤에는 새로 뽑아 쉬운 말 임무가 된다
+    for (const id of r.targetIds) f.add(id);
     expect(currentRequest(r, f, 3, deck, zones).kind).toBe('plain');
   });
 

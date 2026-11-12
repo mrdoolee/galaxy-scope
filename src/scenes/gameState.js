@@ -1,4 +1,5 @@
 import { load, save, clear, newGame, repairState } from '../logic/save.js';
+import { assignMission, resumeNight } from '../logic/night.js';
 import { OBJECTS } from '../data/objects.js';
 import { ZONES } from '../data/zones.js';
 import { openZones, currentRequest, currentTermRequest } from '../logic/requests.js';
@@ -30,6 +31,12 @@ export function bootState(registry) {
   const fixed = repairState(state, DECK_IDS);
   if (fixed !== state) {
     state = fixed;
+    if (st) save(st, state);
+  }
+  // 해가 뜬 채 저장됐거나 임무를 이미 다 찾은 저장은 밤을 이어 맞춘다.
+  const resumed = resumeNight(state, new Set(state.foundIds));
+  if (resumed !== state) {
+    state = resumed;
     if (st) save(st, state);
   }
   registry.set('state', state);
@@ -77,7 +84,9 @@ export function refreshRequest(scene) {
     scene.registry.set('request', term);
     return term;
   }
-  const req = currentRequest(scene.registry.get('request') ?? null, found, state.seed, DECK, openZones(found.size, ZONES));
+  const req = currentRequest(state.mission ?? null, found, state.seed, DECK, openZones(found.size, ZONES));
+  const withMission = assignMission(state, req);
+  if (withMission !== state) commit(scene, withMission);
   scene.registry.set('request', req);
   return req;
 }

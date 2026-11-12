@@ -1,7 +1,7 @@
 // 결과 화면의 점수 내역. Phaser에 의존하지 않는다.
 import { SCORE, RANKS } from '../config/balance.js';
 import { nextHintLevel } from './sorting.js';
-import { stageScore, totalScore, rankFor, isFull } from './scoring.js';
+import { stageScore, totalScore, rankFor, isFull, starPoints } from './scoring.js';
 import { STAGE_ORDER, stageCards, foundCards, safeCount } from './sortFlow.js';
 
 // 수습 1, 정식 2, 수석 3(rank-badge-N.png).
@@ -13,7 +13,7 @@ export function rankLevel(name) {
 /**
  * 저장된 상태에서 점수 내역을 낸다. cards는 덱 전체.
  * -> { found, findPoints, stages: [{ stage, cardCount, hintLevel, wrongSubmits, points }],
- *      typesRegistered, allTypesPoints, fullPoints, total, rank, rankLevel }
+ *      typesRegistered, allTypesPoints, fullPoints, starPoints, earlyMissions, earlyPoints, total, rank, rankLevel }
  */
 export function scoreReport(state, cards) {
   const mine = foundCards(state, cards);
@@ -25,7 +25,9 @@ export function scoreReport(state, cards) {
     return { stage, cardCount, hintLevel, wrongSubmits, points: stageScore(cardCount, hintLevel, wrongSubmits) };
   });
   const typesRegistered = new Set(mine.map((o) => o.type)).size;
-  const total = totalScore({ found, stages, typesRegistered });
+  const stars = starPoints(state.ratings, mine.map((o) => o.id));
+  const earlyMissions = safeCount(state.earlyMissions);
+  const total = totalScore({ found, stages, typesRegistered, starBonus: stars, earlyMissions });
   const rank = rankFor(total);
   return {
     found,
@@ -34,6 +36,9 @@ export function scoreReport(state, cards) {
     typesRegistered,
     allTypesPoints: typesRegistered === 5 ? SCORE.allTypes : 0,
     fullPoints: isFull(found) ? SCORE.full : 0,
+    starPoints: stars,
+    earlyMissions,
+    earlyPoints: earlyMissions * SCORE.earlyMission,
     total,
     rank,
     rankLevel: rankLevel(rank),

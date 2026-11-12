@@ -52,7 +52,7 @@ export const BOOT_TEXT = {
 
 export const MAP_TEXT = {
   count: (n, total) => `수집 ${n} / ${total}`,
-  free: '열린 별자리를 눌러 하늘을 자유롭게 훑어보세요.',
+  free: '별자리를 눌러 임무를 시작하세요.',
   picture: (zone, k) => `${zone}에서 이 사진과 닮은 천체 ${k}개를 찾아 주세요.`,
   plain: (zone, k) => `${zone}에서 ${k}개를 찾아 주세요.`,
   done: '다 찾음',

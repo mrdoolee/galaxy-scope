@@ -7,7 +7,7 @@ import { makeRequest, openZones, currentRequest } from '../../src/logic/requests
 import { makeRng } from '../../src/logic/rng.js';
 import { OBJECTS } from '../../src/data/objects.js';
 import { ZONES } from '../../src/data/zones.js';
-import { FREE_UNTIL, UNLOCK_ALL_AT } from '../../src/config/balance.js';
+import { UNLOCK_ALL_AT } from '../../src/config/balance.js';
 
 const deck = OBJECTS.filter((o) => o.deck);
 
@@ -28,13 +28,10 @@ describe('한 판의 수집 흐름', () => {
       const n = found.size;
       opened.push(playableZones(n).length);
 
-      // 의뢰: FREE_UNTIL 미만이면 없고, 그 뒤로는 20장을 다 찾을 때까지 늘 있다
-      const r = makeRequest(found, deck, openZones(n, ZONES), makeRng(n + 1));
-      if (n < FREE_UNTIL) expect(r).toBeNull();
-      else expect(r).not.toBeNull();
+      // 임무: 처음부터 20장을 다 찾을 때까지 늘 있다
+      expect(makeRequest(found, deck, openZones(n, ZONES), makeRng(n + 1))).not.toBeNull();
       request = currentRequest(request, found, state.seed, deck, openZones(n, ZONES));
-      if (n < FREE_UNTIL) expect(request).toBeNull();
-      else expect(request.targetIds.some((id) => !found.has(id))).toBe(true);
+      expect(request.targetIds.some((id) => !found.has(id))).toBe(true);
 
       // 열린 구역 중 아직 남은 천체가 있는 첫 구역에 들어가 한 장을 찾는다
       const zoneId = playableZones(n).find((z) => deck.some((o) => o.zone === z && !found.has(o.id)));

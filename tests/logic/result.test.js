@@ -29,11 +29,29 @@ describe('scoreReport', () => {
     expect(r.findPoints + r.stages.reduce((a, x) => a + x.points, 0) + r.allTypesPoints + r.fullPoints).toBe(r.total);
   });
 
-  it('힌트 없이 다 맞히면 4800, 수석 연구원', () => {
+  it('힌트 없이 다 맞히면 4800, 정식 연구원', () => {
     const r = scoreReport(done({ shape: 0, nebula: 0, cluster: 0 }), deck);
     expect(r.total).toBe(4800);
-    expect(r.rank).toBe('수석 연구원');
-    expect(r.rankLevel).toBe(3);
+    expect(r.rank).toBe('정식 연구원');
+    expect(r.rankLevel).toBe(2);
+    expect(r.starPoints).toBe(0);
+    expect(r.earlyPoints).toBe(0);
+  });
+
+  it('별점과 동트기 전 완료를 점수에 넣고 내역 세 항목을 낸다', () => {
+    const ratings = { [deck[0].id]: 3, [deck[1].id]: 2, [deck[2].id]: 1 };
+    const s = { ...done({ shape: 0, nebula: 0, cluster: 0 }), ratings, earlyMissions: 10 };
+    const r = scoreReport(s, deck);
+    expect(r.starPoints).toBe(75);
+    expect(r.earlyMissions).toBe(10);
+    expect(r.earlyPoints).toBe(500);
+    expect(r.total).toBe(4800 + 75 + 500);
+    expect(r.total).toBe(totalScore({ found: 20, stages: r.stages, typesRegistered: 5, starBonus: 75, earlyMissions: 10 }));
+  });
+
+  it('보너스 천체의 별점은 점수에 들어가지 않는다', () => {
+    const s = { ...done({ shape: 0, nebula: 0, cluster: 0 }), ratings: { 'not-in-deck': 3 } };
+    expect(scoreReport(s, deck).starPoints).toBe(0);
   });
 
   it('덱에 없는 id는 세지 않고, 저장된 이상한 틀린 횟수는 0 이상의 정수로 본다', () => {
