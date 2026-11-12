@@ -178,3 +178,19 @@ export const BONUS_TEXT = {
   allDone: '보너스 천체를 모두 찾았어요! 결과 화면으로 돌아가 보세요.',
   loading: '보너스 사진을 불러오는 중…',
 };
+
+// 길잡이 별 단서. 방향 이름 뒤 조사는 받침으로 정한다: 받침이 없거나 ㄹ이면 "로", 그 밖이면 "으로".
+export const DIR_KO = {
+  up: '위', upRight: '오른쪽 위', right: '오른쪽', downRight: '오른쪽 아래',
+  down: '아래', downLeft: '왼쪽 아래', left: '왼쪽', upLeft: '왼쪽 위',
+};
+export function withRo(word) {
+  const code = word.charCodeAt(word.length - 1) - 0xac00;
+  const jong = code >= 0 && code <= 11171 ? code % 28 : 0;
+  return word + (jong === 0 || jong === 8 ? '로' : '으로');
+}
+export const GUIDE_TEXT = (clue) => {
+  const dir = DIR_KO[clue.dir];
+  if (clue.band === 'near') return `${clue.nameKo} 바로 ${dir}에 있어요.`;
+  return `${clue.nameKo}에서 ${withRo(dir)} ${clue.band === 'mid' ? '조금' : '멀리'} 가 보세요.`;
+};
