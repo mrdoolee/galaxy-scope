@@ -1,7 +1,8 @@
 // 천체 목록. 사진 출처는 2026-11-12에 각 원문 페이지에서 확인했다.
 // ESO, NOIRLab, ESA/Hubble은 별도 표기가 없으면 CC BY 4.0이고, 크레딧은 페이지 문구 그대로 적는다.
-// 사진은 tools/fetch-photos.mjs가 photo.sourceUrl에서 받아 긴 변 1600px 이하로 줄여 저장한다(edited: true).
-export const TYPES = ['emission', 'reflection', 'dark', 'open', 'globular'];
+// 사진은 tools/fetch-photos.mjs가 photo.sourceUrl에서 받아 긴 변 1024px 이하로 줄여 저장하고,
+// 화면에서는 카드 창에 맞게 잘라 보인다(edited: true).
+export const TYPES =['emission', 'reflection', 'dark', 'open', 'globular'];
 
 const CHECKED_ON = '2026-11-12';
 const LICENSE = 'CC BY 4.0';

@@ -21,6 +21,8 @@ const game = new Phaser.Game({
   },
   // 두 번째 손가락을 알아채야 끌기를 끝낼 수 있다.
   input: { activePointers: 2 },
+  // 연결이 멈춘 사진도 20초 뒤에는 실패로 끝나 "다시 시도"로 이어지게(기본값 0은 한없이 기다린다).
+  loader: { timeout: 20000 },
   scene: [BootScene, SkyMapScene, ScanScene, SortScene, RegistryScene, ResultScene, CreditsScene],
 });
 
