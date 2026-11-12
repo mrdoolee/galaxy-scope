@@ -9,3 +9,13 @@ export function makeRng(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+// 저장된 판 시드와 문자열 키(구역 id, 천체 id)로 새 시드를 만든다. 새로 고침해도 같은 값.
+export function seedFor(seed, key) {
+  let h = (seed >>> 0) ^ 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}

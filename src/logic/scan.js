@@ -1,4 +1,5 @@
 import { ZONE_W, ZONE_H, VIEW_RADIUS, BLUR_SPEED, SMUDGE_SPEED, LOCK_RADIUS, FOCUS_TOLERANCE, FOCUS_HOLD_MS } from '../config/balance.js';
+import { makeRng, seedFor } from './rng.js';
 
 const dist = (view, p) => Math.hypot(p.x - view.x, p.y - view.y);
 
@@ -45,4 +46,14 @@ export function nudgeDirection(view, placed, foundIds) {
   if (!best) return null;
   if (bestD === 0) return { dx: 0, dy: 0 };
   return { dx: (best.x - view.x) / bestD, dy: (best.y - view.y) / bestD };
+}
+
+// 천체마다 숨은 초점 목표(0~1 눈금). 눈금은 0에서 시작하므로 0.3 이상에 둔다.
+export function focusTarget(seed, id) {
+  return 0.3 + 0.6 * makeRng(seedFor(seed, `focus:${id}`))();
+}
+
+// 사진 흐림 정도(0 선명 ~ 1 가장 흐림): 목표에서 멀수록 흐리다.
+export function focusBlur(value, target) {
+  return Math.min(1, Math.abs(value - target) / 0.5);
 }

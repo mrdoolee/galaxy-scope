@@ -1,4 +1,5 @@
 import { ZONE_W, ZONE_H, EDGE_MARGIN, MIN_GAP } from '../config/balance.js';
+import { makeRng, seedFor } from './rng.js';
 
 const MAX_TRIES = 200;
 const X0 = EDGE_MARGIN, X1 = ZONE_W - EDGE_MARGIN;
@@ -44,4 +45,16 @@ export function layoutZone(objectIds, rng) {
     placed.push({ id, ...spot });
   }
   return placed;
+}
+
+// 한 판 안에서 구역 배치는 고정: 판 시드와 구역 id로 난수를 만든다(새로 고침해도 그대로).
+export function zoneLayout(seed, zoneId, deck) {
+  const ids = deck.filter((o) => o.zone === zoneId).map((o) => o.id);
+  return layoutZone(ids, makeRng(seedFor(seed, zoneId)));
+}
+
+// 하늘 지도에 보일 구역: 필수 카드가 하나라도 있는 구역(ZONES 순서 그대로).
+export function mapZoneIds(deck, zones) {
+  const used = new Set(deck.map((o) => o.zone));
+  return zones.filter((z) => used.has(z.id)).map((z) => z.id);
 }

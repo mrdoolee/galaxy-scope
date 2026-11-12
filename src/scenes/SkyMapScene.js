@@ -1,0 +1,113 @@
+import Phaser from 'phaser';
+import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
+import { ZONES } from '../data/zones.js';
+import { MAP_TEXT, SCAN_TEXT } from '../data/copy.js';
+import { mapZoneIds } from '../logic/layout.js';
+import { openZones } from '../logic/requests.js';
+import { DECK, DECK_SIZE, getState, refreshRequest } from './gameState.js';
+import { addText, addPlate, COLOR } from './ui/style.js';
+import { onPress, MIN_TOUCH } from './ui/button.js';
+import { remainingTargets, plainLooks, addRequestThumbs } from './ui/request.js';
+
+const HEADER_H = 106;
+const LABEL_DY = 60; // 표시 가운데에서 이름표 가운데까지(터치 대상 아래 4px 띄우고 24px 높이)
+
+export function addBackdrop(scene, tint = 0xffffff) {
+  const bg = scene.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg-observatory');
+  bg.setScale(Math.max(GAME_WIDTH / bg.width, GAME_HEIGHT / bg.height)).setTint(tint);
+  return bg;
+}
+
+export default class SkyMapScene extends Phaser.Scene {
+  constructor() {
+    super(SCENES.SKY_MAP);
+  }
+
+  create() {
+    const state = getState(this);
+    const found = new Set(state.foundIds);
+    const open = new Set(openZones(found.size, ZONES));
+    const shownIds = mapZoneIds(DECK, ZONES);
+    const request = refreshRequest(this);
+
+    addBackdrop(this, 0x5c6684); // 별자리 선과 이름표가 배경 그림보다 앞에 보이게 어둡게
+    this.drawHeader(request, found);
+
+    const g = this.add.graphics();
+    for (const id of shownIds) {
+      const zone = ZONES.find((z) => z.id === id);
+      const left = DECK.filter((o) => o.zone === id && !found.has(o.id)).length;
+      const status = !open.has(id) ? 'locked' : left === 0 ? 'done' : 'open';
+      this.drawZone(g, zone, status, request?.zoneId === id);
+    }
+
+    // 8장째에 새 구역이 열렸으면 한 번 알린다.
+    const openShown = shownIds.filter((id) => open.has(id)).length;
+    const seen = this.registry.get('seenOpenCount');
+    if (seen !== undefined && openShown > seen) this.toast(MAP_TEXT.unlocked);
+    this.registry.set('seenOpenCount', openShown);
+  }
+
+  drawHeader(request, found) {
+    addPlate(this, 8, 6, GAME_WIDTH - 16, HEADER_H - 10, 0.82);
+    const agent = this.add.image(62, HEADER_H / 2, 'agent-hq');
+    agent.setScale(92 / agent.width);
+    addText(this, GAME_WIDTH - 28, HEADER_H / 2, MAP_TEXT.count(found.size, DECK_SIZE), { size: 30, bold: true, color: COLOR.textBrass, origin: [1, 0.5] });
+
+    const targets = remainingTargets(request, found, DECK);
+    const x = 122;
+    if (!request || targets.length === 0) {
+      addText(this, x, HEADER_H / 2, MAP_TEXT.free, { size: 28, origin: [0, 0.5] });
+      return;
+    }
+    const zoneName = ZONES.find((z) => z.id === request.zoneId).nameKo;
+    if (request.kind === 'picture') {
+      addText(this, x, HEADER_H / 2, MAP_TEXT.picture(zoneName, targets.length), { size: 26, wrap: 560, origin: [0, 0.5] });
+      addRequestThumbs(this, 700, (HEADER_H - 84) / 2, targets, 84, 12);
+    } else {
+      addText(this, x, 20, MAP_TEXT.plain(zoneName, targets.length), { size: 26, bold: true });
+      addText(this, x, 56, plainLooks(targets), { size: 24, color: COLOR.textBrass, wrap: 900 });
+    }
+  }
+
+  drawZone(g, zone, status, requested) {
+    const { mapX: x, mapY: y } = zone;
+    const on = status === 'open';
+    const lineColor = on ? COLOR.brassLight : 0x8090b0;
+    const alpha = on ? 0.95 : status === 'done' ? 0.5 : 0.28;
+    const { stars, segs } = zone.lines;
+    g.lineStyle(on ? 2.5 : 2, lineColor, alpha * 0.8);
+    for (const [i, j] of segs) g.lineBetween(x + stars[i][0], y + stars[i][1], x + stars[j][0], y + stars[j][1]);
+    g.fillStyle(0xffffff, alpha);
+    for (const [dx, dy] of stars) g.fillCircle(x + dx, y + dy, on ? 4 : 3);
+
+    const name = status === 'done' ? `${zone.nameKo} ✓` : zone.nameKo;
+    addText(this, x, y + LABEL_DY, name, {
+      size: 20, bold: on, color: on ? COLOR.text : COLOR.textDim, origin: [0.5, 0.5], stroke: 5,
+    }).setAlpha(status === 'locked' ? 0.75 : 1);
+
+    if (requested) {
+      const ring = this.add.graphics({ x, y });
+      ring.lineStyle(4, COLOR.brass, 1);
+      ring.strokeCircle(0, 0, 46);
+      this.tweens.add({ targets: ring, scale: 1.25, alpha: 0.25, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+    }
+
+    const hit = this.add.zone(x, y, MIN_TOUCH, MIN_TOUCH).setInteractive({ useHandCursor: on });
+    onPress(this, hit, () => {
+      if (status === 'open') this.scene.start(SCENES.SCAN, { zoneId: zone.id });
+      else this.toast(status === 'done' ? SCAN_TEXT.zoneDone : MAP_TEXT.lockedTap);
+    });
+  }
+
+  toast(str) {
+    this.toastObj?.destroy();
+    const c = this.add.container(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    const t = addText(this, 0, 0, str, { size: 30, bold: true, origin: [0.5, 0.5] });
+    const w = t.width + 64;
+    const plate = addPlate(this, -w / 2, -38, w, 76, 0.92);
+    c.add([plate, t]);
+    this.toastObj = c;
+    this.tweens.add({ targets: c, alpha: 0, delay: 1800, duration: 400, onComplete: () => c.destroy() });
+  }
+}

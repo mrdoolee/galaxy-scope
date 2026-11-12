@@ -1,4 +1,5 @@
 import { FREE_UNTIL, PICTURE_UNTIL, UNLOCK_ALL_AT, REQUEST_SIZE } from '../config/balance.js';
+import { makeRng, seedFor } from './rng.js';
 
 export function requestKind(foundCount) {
   if (foundCount < FREE_UNTIL) return 'none';
@@ -24,4 +25,12 @@ export function makeRequest(foundIds, deck, openZoneIds, rng) {
 
 export function openZones(foundCount, zones) {
   return zones.filter((z) => z.textbook || foundCount >= UNLOCK_ALL_AT).map((z) => z.id);
+}
+
+// 지금 보여 줄 의뢰. 앞 의뢰의 대상이 남아 있고 의뢰 종류가 그대로면 이어 가고,
+// 아니면 판 시드와 찾은 수로 새로 뽑는다(새로 고침해도 같은 의뢰가 나온다).
+export function currentRequest(prev, foundIds, seed, deck, openZoneIds) {
+  const kind = requestKind(foundIds.size);
+  if (prev && prev.kind === kind && prev.targetIds.some((id) => !foundIds.has(id))) return prev;
+  return makeRequest(foundIds, deck, openZoneIds, makeRng(seedFor(seed, `request:${foundIds.size}`)));
 }
