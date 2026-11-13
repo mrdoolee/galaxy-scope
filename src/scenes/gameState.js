@@ -81,6 +81,19 @@ export function resetGame(scene) {
   return commit(scene, newGame(Math.floor(Math.random() * 2 ** 31)));
 }
 
+// 랜딩의 「처음부터 다시 하기」: 저장을 지우고 새 판으로 하늘 지도에서 시작한다(시작 브리핑부터 다시 나온다).
+// 게임은 랜딩 뒤에서 이미 떠 있으므로, 돌던 장면을 멈추고 하늘 지도를 새로 연다.
+// 아직 불러오는 중이면(진행 상황이 registry에 없다) 저장만 지운다: 불러오기가 끝나면 bootState가 새 판을 만든다.
+export function restartFromLanding(game) {
+  const st = storage();
+  if (st) clear(st);
+  if (!game.registry.get('state')) return false;
+  resetGame({ registry: game.registry }); // 장면을 멈추기 전에 바꾼다(훑기 화면은 닫힐 때 registry의 판을 저장한다)
+  for (const scene of game.scene.getScenes(true)) game.scene.stop(scene.scene.key);
+  game.scene.start(SCENES.SKY_MAP);
+  return true;
+}
+
 // 지금 의뢰를 정해 registry에 둔다(하늘 지도와 훑기 화면이 같은 의뢰를 본다).
 export function refreshRequest(scene) {
   const state = getState(scene);

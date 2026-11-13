@@ -3,7 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS, NIGHT_SAVE_MS, SHOT_RETRY_MS } from '../config/balance.js';
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
-import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, NIGHT_TEXT } from '../data/copy.js';
+import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, NIGHT_TEXT, TUTORIAL_TEXT } from '../data/copy.js';
 import { chartLayout, chartGuides } from '../logic/chart.js';
 import { startGuide, zoneClues } from '../logic/guide.js';
 import { viewState, visibleSmudges, lockTarget, focusError, gaugeValue, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
@@ -13,6 +13,7 @@ import { inBonus, bonusProgress } from '../logic/bonus.js';
 import { tickNight, isDawn, endDay, nightTotal, clockRuns } from '../logic/night.js';
 import { shotStars } from '../logic/rating.js';
 import { recordCapture } from '../logic/capture.js';
+import { tutorialOn, tutorialTarget, tutorialStep } from '../logic/tutorial.js';
 import { DECK, DECK_IDS, DECK_SIZE, getState, persist, commit, stash, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
@@ -44,6 +45,9 @@ const SMUDGE_ALPHA = 0.4;
 const FOCUS_SIZE = 2 * VIEW_RADIUS + 24;
 const SIDE_X = FRAME_LEFT / 2;               // 왼쪽 판 가운데
 const RIGHT_X = (FRAME_RIGHT + GAME_WIDTH) / 2; // 오른쪽 판 가운데
+const MARK_R = 104;      // 첫 탐사 안내: 대상 얼룩을 두르는 원
+const MARK_LABEL_DY = 172; // 그 원을 풀이하는 글: 시야 가운데에서 위나 아래로 이만큼(시야 안에서 잘리지 않는 자리)
+const NO_IDS = new Set();
 
 export default class ScanScene extends Phaser.Scene {
   constructor() {
@@ -85,7 +89,75 @@ export default class ScanScene extends Phaser.Scene {
     this.buildHud();
     this.bindInput();
     this.refreshPanel();
+    this.buildTutorial(state);
     this.showNight(true);
+  }
+
+  // ── 첫 탐사 안내: 새 판에서 첫 카드를 얻을 때까지 화살표, 얼룩을 두르는 원, 누를 버튼 표시로 한 단계씩 이끈다.
+  // 단계는 logic/tutorial.js가 정하고, 여기서는 그리기만 한다. 안내하는 동안 밤 시계는 가지 않는다(tickClock).
+  buildTutorial(state) {
+    const request = this.registry.get('request') ?? null;
+    this.tutorial = !this.bonus && tutorialOn(state) && !!request;
+    if (!this.tutorial) return;
+    this.tutTarget = tutorialTarget(request, this.zoneId, this.placed, this.found);
+    this.tutZoneName = ZONES.find((z) => z.id === request.zoneId)?.nameKo ?? '';
+    const pulse = (obj) => {
+      this.tweens.add({ targets: obj, alpha: { from: 1, to: 0.3 }, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+      return obj;
+    };
+    this.tutParts = [];
+    this.tutMark = null;
+    this.tutLabel = null;
+    if (this.tutTarget) {
+      // 대상 얼룩을 두르는 원: 하늘과 함께 움직인다.
+      this.tutMark = this.add.graphics({ x: this.tutTarget.x, y: this.tutTarget.y });
+      this.tutMark.lineStyle(5, COLOR.brassLight, 1);
+      this.tutMark.strokeCircle(0, 0, MARK_R);
+      this.sky.add(pulse(this.tutMark).setVisible(false));
+      // "이것이 찾는 천체"라는 글: 얼룩이 시야 가장자리에 있어도 잘리지 않게 시야 안 정해진 자리에 둔다(얼룩이 없는 쪽).
+      this.tutLabel = addText(this, CX, CY + MARK_LABEL_DY, TUTORIAL_TEXT.mark, {
+        size: MIN_FONT, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5], stroke: 6,
+      }).setVisible(false);
+      this.tutParts.push(this.tutMark);
+    }
+    // 누를 버튼을 두르는 표시: 확대·촬영(같은 자리의 둥근 버튼), 지도로(임무 구역이 아닐 때)
+    this.tutPulse = this.add.graphics({ x: RIGHT_X, y: 538 });
+    this.tutPulse.lineStyle(6, COLOR.brassLight, 1);
+    this.tutPulse.strokeCircle(0, 0, 80);
+    this.tutBack = this.add.graphics({ x: SIDE_X, y: 62 });
+    this.tutBack.lineStyle(6, COLOR.brassLight, 1);
+    this.tutBack.strokeRoundedRect(-108, -52, 216, 104, 22);
+    this.tutParts.push(pulse(this.tutPulse).setVisible(false), pulse(this.tutBack).setVisible(false));
+  }
+
+  // 훑기 중 안내: 단계에 맞는 글과 표시. 화살표(nudge)는 기다리지 않고 처음부터 대상을 가리킨다.
+  updateTutorial(lock) {
+    const t = this.tutTarget;
+    const seen = !!t && this.visibleIds.includes(t.id);
+    const step = tutorialStep({ mode: 'sweep', hasTarget: !!t, speed: this.speed, locked: !!lock, targetVisible: seen });
+    this.tutMark?.setVisible(seen);
+    // 얼룩이 시야 아래쪽에 있으면 글은 위에, 아니면 아래에
+    this.tutLabel?.setVisible(seen).setY(t.y - this.view.y > 40 ? CY - MARK_LABEL_DY : CY + MARK_LABEL_DY);
+    const dir = t && !lock && !seen ? nudgeDirection(this.view, [t], NO_IDS) : null;
+    this.nudge.setVisible(!!dir && (dir.dx !== 0 || dir.dy !== 0));
+    if (dir) this.nudge.setRotation(Math.atan2(dir.dy, dir.dx));
+    this.tutPulse.setVisible(step === 'zoom');
+    this.tutBack.setVisible(step === 'elsewhere');
+    this.status.setText(step === 'elsewhere' ? TUTORIAL_TEXT.elsewhere(this.tutZoneName) : TUTORIAL_TEXT[step]);
+  }
+
+  // 첫 카드를 얻으면 안내를 걷는다.
+  endTutorial() {
+    if (!this.tutorial) return;
+    this.tutorial = false;
+    for (const part of this.tutParts) this.tweens.killTweensOf(part);
+    this.tutMark?.destroy();
+    this.tutLabel?.destroy();
+    this.tutPulse.destroy();
+    this.tutBack.destroy();
+    this.tutParts = [];
+    this.tutMark = null;
+    this.tutLabel = null;
   }
 
   // ── 구역 하늘: 시드 난수로 찍은 별 + 별자리(선, 밝은 별, 길잡이 이름표) + 천체 자리의 흐린 얼룩
@@ -278,7 +350,7 @@ export default class ScanScene extends Phaser.Scene {
   // 임무 구역이 아니어도 간다(어느 구역을 보든 밤은 지나간다). 매 프레임 registry에 두고 NIGHT_SAVE_MS마다 기기에 저장한다.
   tickClock(delta) {
     const state = getState(this);
-    const gate = { phase: state.phase, bonus: this.bonus, mode: this.mode, hasMission: !!state.mission, dayWait: this.dayWait };
+    const gate = { phase: state.phase, bonus: this.bonus, mode: this.mode, hasMission: !!state.mission, dayWait: this.dayWait, guided: this.tutorial };
     if (!clockRuns(gate)) return;
     const next = stash(this, tickNight(state, delta));
     this.sinceSave += delta;
@@ -368,6 +440,12 @@ export default class ScanScene extends Phaser.Scene {
       this.drawReticle(!!lock);
     }
 
+    this.miniMap.update(this.view, this.found);
+    if (this.tutorial) {
+      this.updateTutorial(lock);
+      return;
+    }
+
     this.idleMs += delta;
     const dir = !lock && this.idleMs >= IDLE_NUDGE_MS ? nudgeDirection(this.view, this.placed, this.found) : null;
     this.nudge.setVisible(!!dir && (dir.dx !== 0 || dir.dy !== 0));
@@ -380,7 +458,6 @@ export default class ScanScene extends Phaser.Scene {
           : lock ? SCAN_TEXT.found
             : this.moved ? '' : SCAN_TEXT.start,
     );
-    this.miniMap.update(this.view, this.found);
   }
 
   enterFocus() {
@@ -402,6 +479,11 @@ export default class ScanScene extends Phaser.Scene {
     this.shutterBtn.container.setVisible(true);
     this.shutterBtn.setEnabled(true);
     this.status.setText(SCAN_TEXT.focusGuide);
+    if (this.tutorial) { // 첫 탐사 안내: 이제 누를 것은 촬영(확대와 같은 자리)
+      this.tutPulse.setVisible(true);
+      this.tutBack.setVisible(false);
+      this.tutLabel?.setVisible(false);
+    }
   }
 
   leaveFocus() {
@@ -451,6 +533,7 @@ export default class ScanScene extends Phaser.Scene {
   // ── 카드 얻기: 찾은 목록·별점·임무 완료를 한 번에 저장하고 "미확인 천체" 카드를 보여 준다
   capture(id, rating) {
     this.mode = 'card';
+    this.endTutorial();
     // 카드가 뜰 때까지(0.65초) 「지도로」를 끈다. 카드 화면의 버튼으로만 나간다.
     this.backBtn.setEnabled(false);
     const result = recordCapture(getState(this), { id, stars: rating.stars, bonus: this.bonus, deckIds: DECK_IDS });

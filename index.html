@@ -65,6 +65,12 @@ html.rotate #rotate{display:flex}
   box-shadow:0 0 0 4px rgba(232,207,143,.18),0 10px 28px rgba(0,0,0,.5);transition:transform .15s ease, box-shadow .15s ease}
 #landing button:hover,#landing button:focus-visible{transform:translateY(-2px);box-shadow:0 0 0 6px rgba(232,207,143,.3),0 14px 32px rgba(0,0,0,.55);outline:none}
 #landing button:active{transform:translateY(1px)}
+/* 하던 판이 있을 때만 보이는 「처음부터 다시 하기」: 시작 단추보다 눈에 덜 띄게 */
+#landing button[hidden]{display:none}
+#landing button.ghost{font-size:clamp(15px,3vh,21px);min-height:48px;padding:.5em 1.2em;color:var(--gold);
+  border:2px solid var(--brass);background:rgba(7,11,28,.6);box-shadow:0 6px 18px rgba(0,0,0,.45)}
+#landing button.ghost:hover,#landing button.ghost:focus-visible{box-shadow:0 0 0 4px rgba(232,207,143,.25),0 8px 22px rgba(0,0,0,.5)}
+#landing button.ghost.armed{color:#2a1c05;background:#f1c9a0;border-color:#fff3cf}
 #landing .teacher{color:var(--gold);font-size:clamp(14px,2.8vh,20px);text-underline-offset:.3em;min-height:44px;display:inline-flex;align-items:center}
 #landing footer{position:relative;padding:clamp(6px,1.6vh,14px) 16px calc(clamp(6px,1.6vh,14px) + env(safe-area-inset-bottom));
   text-align:center;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:clamp(11px,2.2vh,14px);color:rgba(253,246,227,.78)}
@@ -76,6 +82,7 @@ html.rotate #rotate{display:flex}
   #landing .tag{font-size:clamp(16px,4.4vw,24px)}
   #landing .eyebrow{font-size:clamp(13px,3.4vw,20px)}
   #landing button{font-size:clamp(19px,5vw,28px)}
+  #landing button.ghost{font-size:clamp(15px,4vw,21px)}
   #landing .teacher{font-size:clamp(15px,4vw,20px)}
   #landing footer{font-size:clamp(11px,2.9vw,14px)}
 }
@@ -98,6 +105,7 @@ html.rotate #rotate{display:flex}
     <p class="tag">밤마다 망원경으로 은하수를 살펴요.<br />빛나는 구름과 별 무리를 찾아 나만의 도감에 담아 보세요.</p>
     <div class="actions">
       <button id="landing-start" type="button">관측 시작하기</button>
+      <button id="landing-restart" class="ghost" type="button" hidden>처음부터 다시 하기</button>
       <a class="teacher" href="teacher.html" target="_blank" rel="noopener">선생님 안내</a>
     </div>
   </div>

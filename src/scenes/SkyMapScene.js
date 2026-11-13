@@ -2,8 +2,9 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
-import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT, INTRO_TEXT } from '../data/copy.js';
-import { mapZoneIds } from '../logic/layout.js';
+import { MAP_TEXT, SCAN_TEXT, BONUS_TEXT, INTRO_TEXT, TUTORIAL_TEXT } from '../data/copy.js';
+import { mapZoneIds, calloutSpot } from '../logic/layout.js';
+import { tutorialOn } from '../logic/tutorial.js';
 import { miniFigure } from '../logic/chart.js';
 import { openZones } from '../logic/requests.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
@@ -67,12 +68,27 @@ export default class SkyMapScene extends Phaser.Scene {
     }
 
     if (this.bonus) return; // 「결과 화면으로」 버튼은 create()에서 이미 놓았다
+    // 첫 탐사 안내: 첫 카드를 얻기 전에는 임무 구역 옆에 어디를 누를지 알려 준다.
+    if (request && tutorialOn(getState(this))) this.drawCallout(request.zoneId, shownIds);
     if (!getState(this).introSeen) this.showIntro();
     // 8장째에 새 구역이 열렸으면 한 번 알린다.
     const openShown = shownIds.filter((id) => open.has(id)).length;
     const seen = this.registry.get('seenOpenCount');
     if (seen !== undefined && openShown > seen) showToast(this, MAP_TEXT.unlocked, { ms: 1800 });
     this.registry.set('seenOpenCount', openShown);
+  }
+
+  // 임무 구역 옆 말풍선. 다른 구역의 그림과 이름표를 가리지 않는 자리를 고른다(logic/layout.js).
+  drawCallout(zoneId, shownIds) {
+    const zone = ZONES.find((z) => z.id === zoneId);
+    if (!zone) return;
+    const text = addText(this, 0, 0, TUTORIAL_TEXT.mapTap, { size: MIN_FONT, bold: true, color: COLOR.textBrass, origin: [0.5, 0.5] });
+    const w = Math.ceil(text.width) + 44, h = 52;
+    const spot = calloutSpot(zone, ZONES.filter((z) => shownIds.includes(z.id)), {
+      w, h, bounds: { x0: 8, y0: HEADER_H + 4, x1: GAME_WIDTH - 8, y1: GAME_HEIGHT - 8 },
+    });
+    const bubble = this.add.container(spot.x, spot.y, [addPlate(this, -w / 2, -h / 2, w, h, 0.95), text]).setDepth(5);
+    this.tweens.add({ targets: bubble, scale: 1.06, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
   }
 
   drawBonusHeader(request, found) {

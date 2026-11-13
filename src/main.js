@@ -9,6 +9,7 @@ import RegistryScene from './scenes/RegistryScene.js';
 import ResultScene from './scenes/ResultScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
 import { initLanding } from './landing.js';
+import { restartFromLanding } from './scenes/gameState.js';
 import { createBgm } from './audio/bgm.js';
 import { initBgmButton } from './audio/bgmButton.js';
 
@@ -47,6 +48,7 @@ initLanding({
     bgm.start();
     bgmButton.show();
   },
+  onRestart: () => restartFromLanding(game),
 });
 
 // 세로 화면이면 덮개를 보이고 게임을 멈춘다. 상태가 바뀔 때만 멈추거나 다시 움직인다.

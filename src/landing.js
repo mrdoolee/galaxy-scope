@@ -2,7 +2,12 @@
 // 버튼을 누를 때 전체 화면으로 바꾸고 가로로 잠근다. 이어 하던 판이 있으면 버튼 글이 바뀐다. 밤 시계는 구역에 들어가야 가므로 랜딩이 떠 있는 동안 잃는 것은 없다.
 import { SAVE_KEY } from './logic/save.js';
 
-export const LANDING_TEXT = { start: '관측 시작하기', resume: '이어서 관측하기' };
+export const LANDING_TEXT = {
+  start: '관측 시작하기', resume: '이어서 관측하기',
+  restart: '처음부터 다시 하기', restartConfirm: '한 번 더 누르면 처음부터',
+};
+// 「처음부터 다시 하기」를 한 번 누른 뒤 확인 문구가 떠 있는 시간. 이 안에 한 번 더 눌러야 지운다(결과 화면의 단추와 같은 방식).
+export const RESTART_CONFIRM_MS = 3000;
 
 // 하던 판이 있는가: 시작 브리핑을 넘겼거나 카드를 한 장이라도 찾았다(게임은 처음 열자마자 빈 판을 저장해 두므로 키만으로는 알 수 없다).
 // 저장소가 막혔거나 저장이 깨졌으면 없는 것으로 본다.
@@ -38,7 +43,9 @@ export async function enterFullscreenLandscape(doc = document, scr = globalThis.
 }
 
 // onStart: 시작 단추를 누른 그 순간(누르기 안)에 부른다. 소리처럼 누르기 안에서만 시작할 수 있는 것을 여기서 켠다.
-export function initLanding({ onStart = () => {}, doc = document, win = window } = {}) {
+// onRestart: 「처음부터 다시 하기」를 두 번 눌러 확인했을 때, onStart보다 먼저 부른다(저장을 지우고 새 판을 만든다).
+// 「처음부터 다시 하기」는 하던 판이 있을 때만 보인다.
+export function initLanding({ onStart = () => {}, onRestart = () => {}, doc = document, win = window } = {}) {
   const el = doc.getElementById('landing');
   const btn = doc.getElementById('landing-start');
   if (!el || !btn) return;
@@ -54,13 +61,43 @@ export function initLanding({ onStart = () => {}, doc = document, win = window }
   for (const type of ['mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchend', 'touchmove', 'touchcancel', 'wheel']) {
     el.addEventListener(type, (e) => e.stopPropagation());
   }
-  btn.addEventListener('click', () => {
+  let started = false;
+  const start = (pressed) => {
+    if (started) return;
+    started = true;
     enterFullscreenLandscape(doc, win.screen);
     onStart();
     el.classList.add('gone');
     el.setAttribute('aria-hidden', 'true');
-    btn.blur();
-  }, { once: true });
+    pressed.blur();
+  };
+  btn.addEventListener('click', () => start(btn));
+
+  const again = doc.getElementById('landing-restart');
+  if (again && hasSave(storage)) {
+    again.hidden = false;
+    again.textContent = LANDING_TEXT.restart;
+    let armed = null;
+    const disarm = () => {
+      armed = null;
+      again.textContent = LANDING_TEXT.restart;
+      again.classList.remove('armed');
+    };
+    again.addEventListener('click', () => {
+      if (started) return;
+      if (armed === null) {
+        // 두 번 눌러야 지운다: 처음 누르면 확인 문구로 바뀌고, 잠시 뒤 되돌아간다.
+        again.textContent = LANDING_TEXT.restartConfirm;
+        again.classList.add('armed');
+        armed = win.setTimeout(disarm, RESTART_CONFIRM_MS);
+        return;
+      }
+      win.clearTimeout(armed);
+      disarm();
+      onRestart();
+      start(again);
+    });
+  }
   // 전체 화면에서 나온 뒤 세로로 들고 있으면 덮개가 보인다. 덮개를 누르면 다시 전체 화면·가로로 돌아간다.
   doc.getElementById('rotate')?.addEventListener('click', () => enterFullscreenLandscape(doc, win.screen));
 }
