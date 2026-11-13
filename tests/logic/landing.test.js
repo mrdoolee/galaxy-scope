@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { hasSave, startLabel, LANDING_TEXT } from '../../src/landing.js';
+import { hasSave, startLabel, LANDING_TEXT, enterFullscreenLandscape } from '../../src/landing.js';
 import { SAVE_KEY } from '../../src/logic/save.js';
 
 const store = (value) => ({ getItem: (k) => (k === SAVE_KEY ? value : null) });
@@ -53,5 +53,42 @@ describe('교사 안내의 천체 표', () => {
     expect(new Set(ids).size).toBe(OBJECTS.length);
     for (const o of OBJECTS) expect(typeName(o).length).toBeGreaterThan(0);
     expect(groups[2].rows.every((o) => o.group === 'galaxy')).toBe(true);
+  });
+});
+
+describe('전체 화면과 가로 잠금', () => {
+  const fakeDoc = (root, extra = {}) => ({ documentElement: root, fullscreenElement: null, ...extra });
+
+  it('전체 화면으로 바꾼 다음 가로로 잠근다', async () => {
+    const calls = [];
+    const doc = fakeDoc({ requestFullscreen: async () => { calls.push('fullscreen'); } });
+    const scr = { orientation: { lock: async (o) => { calls.push(`lock:${o}`); } } };
+    expect(await enterFullscreenLandscape(doc, scr)).toBe(true);
+    expect(calls).toEqual(['fullscreen', 'lock:landscape']);
+  });
+  it('이미 전체 화면이면 다시 청하지 않고 잠그기만 한다', async () => {
+    const calls = [];
+    const root = { requestFullscreen: async () => { calls.push('fullscreen'); } };
+    const scr = { orientation: { lock: async () => { calls.push('lock'); } } };
+    expect(await enterFullscreenLandscape(fakeDoc(root, { fullscreenElement: root }), scr)).toBe(true);
+    expect(calls).toEqual(['lock']);
+  });
+  it('가로 잠금이 안 되는 기기에서도 오류 없이 전체 화면은 된다', async () => {
+    const doc = fakeDoc({ requestFullscreen: async () => {} });
+    expect(await enterFullscreenLandscape(doc, { orientation: { lock: async () => { throw new Error('NotSupportedError'); } } })).toBe(true);
+    expect(await enterFullscreenLandscape(doc, {})).toBe(true);
+    expect(await enterFullscreenLandscape(doc, undefined)).toBe(true);
+  });
+  it('전체 화면 기능이 없거나 거절되면 false, 가로 잠금은 시도하지 않는다', async () => {
+    let locked = false;
+    const scr = { orientation: { lock: async () => { locked = true; } } };
+    expect(await enterFullscreenLandscape(fakeDoc({}), scr)).toBe(false);
+    expect(await enterFullscreenLandscape(fakeDoc({ requestFullscreen: async () => { throw new Error('denied'); } }), scr)).toBe(false);
+    expect(locked).toBe(false);
+  });
+  it('옛 사파리 이름(webkitRequestFullscreen)도 쓴다', async () => {
+    let called = false;
+    expect(await enterFullscreenLandscape(fakeDoc({ webkitRequestFullscreen() { called = true; } }), {})).toBe(true);
+    expect(called).toBe(true);
   });
 });

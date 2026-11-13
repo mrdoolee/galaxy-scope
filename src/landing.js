@@ -1,5 +1,5 @@
 // 랜딩(첫 화면, index.html의 #landing). 게임은 그 뒤에서 미리 불러오고, 버튼을 누르면 랜딩이 걷힌다.
-// 이어 하던 판이 있으면 버튼 글이 바뀐다. 밤 시계는 구역에 들어가야 가므로 랜딩이 떠 있는 동안 잃는 것은 없다.
+// 버튼을 누를 때 전체 화면으로 바꾸고 가로로 잠근다. 이어 하던 판이 있으면 버튼 글이 바뀐다. 밤 시계는 구역에 들어가야 가므로 랜딩이 떠 있는 동안 잃는 것은 없다.
 import { SAVE_KEY } from './logic/save.js';
 
 export const LANDING_TEXT = { start: '관측 시작하기', resume: '이어서 관측하기' };
@@ -16,6 +16,26 @@ export function hasSave(storage) {
 }
 
 export const startLabel = (saved) => (saved ? LANDING_TEXT.resume : LANDING_TEXT.start);
+
+// 전체 화면으로 바꾸고 가로로 잠근다. 누르기(사용자 동작) 안에서 불러야 브라우저가 받아 준다.
+// 전체 화면이 되면 true. 가로 잠금은 전체 화면일 때만 되고, 안 되는 기기(아이폰, PC)에서는 그냥 넘어간다
+// (세로로 들면 「기기를 가로로 돌려 주세요」 덮개가 나온다). 전체 화면을 나가면 잠금도 함께 풀린다.
+export async function enterFullscreenLandscape(doc = document, scr = globalThis.screen) {
+  const root = doc.documentElement;
+  const request = root.requestFullscreen ?? root.webkitRequestFullscreen;
+  if (!request) return false;
+  try {
+    if (!(doc.fullscreenElement ?? doc.webkitFullscreenElement)) await request.call(root, { navigationUI: 'hide' });
+  } catch {
+    return false;
+  }
+  try {
+    await scr?.orientation?.lock?.('landscape');
+  } catch {
+    // 가로 잠금을 지원하지 않는 기기
+  }
+  return true;
+}
 
 export function initLanding(doc = document, win = window) {
   const el = doc.getElementById('landing');
@@ -34,8 +54,11 @@ export function initLanding(doc = document, win = window) {
     el.addEventListener(type, (e) => e.stopPropagation());
   }
   btn.addEventListener('click', () => {
+    enterFullscreenLandscape(doc, win.screen);
     el.classList.add('gone');
     el.setAttribute('aria-hidden', 'true');
     btn.blur();
   }, { once: true });
+  // 전체 화면에서 나온 뒤 세로로 들고 있으면 덮개가 보인다. 덮개를 누르면 다시 전체 화면·가로로 돌아간다.
+  doc.getElementById('rotate')?.addEventListener('click', () => enterFullscreenLandscape(doc, win.screen));
 }

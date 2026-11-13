@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>별구름 수집가</title>
+<!-- 홈 화면에 추가해서 열면 주소창 없이 열린다(전체 화면 기능이 없는 아이폰용) -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="별구름 수집가" />
+<meta name="theme-color" content="#05070f" />
 <meta name="description" content="밤마다 망원경으로 은하수의 구름과 별 무리를 찾아 도감에 담는 중학교 2학년 과학 게임" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +19,8 @@ html,body{margin:0;height:100%;background:#05070f;overflow:hidden;overscroll-beh
 #rotate{display:none;position:fixed;inset:0;z-index:10;background:#05070f;color:#fff;font:32px "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;align-items:center;justify-content:center;text-align:center}
 /* main.js가 토글하는 클래스로만 보인다 (판정은 src/config/orientation.js) */
 html.rotate #rotate{display:flex}
+/* 전체 화면일 때 바탕 */
+:fullscreen,::backdrop{background:#05070f}
 
 /* ── 랜딩(첫 화면). 게임 위를 덮고 있다가 「관측 시작하기」를 누르면 사라진다(src/landing.js). 세로 화면에서도 보인다. */
 #landing{
