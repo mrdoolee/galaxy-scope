@@ -9,7 +9,10 @@ import RegistryScene from './scenes/RegistryScene.js';
 import ResultScene from './scenes/ResultScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
 import { initLanding } from './landing.js';
-import { restartFromLanding } from './scenes/gameState.js';
+import { restartFromLanding, applySkipLink } from './scenes/gameState.js';
+
+// 건너뛰기 링크(?skip=sort)는 게임과 첫 화면이 저장을 읽기 전에 반영한다.
+applySkipLink();
 import { createBgm } from './audio/bgm.js';
 import { initBgmButton } from './audio/bgmButton.js';
 

@@ -9,6 +9,7 @@
 - 게임: https://nebula-trdoolee.vercel.app
 - 선생님 안내: https://nebula-trdoolee.vercel.app/teacher.html
 - 수업 슬라이드: https://nebula-trdoolee.vercel.app/lesson.html (게임을 한 뒤 교과서 282~285쪽으로 정리하는 10장. →·스페이스로 넘기고 F로 전체 화면)
+- 묶기부터 시작하기: https://nebula-trdoolee.vercel.app/?skip=sort (카드 20장을 다 모은 판으로 건너뜁니다. 그 기기에서 하던 판은 지워지고, 촬영 별점과 동트기 전 완료는 0점으로 시작합니다. 링크는 선생님 안내 쪽의 「수업 활용」에만 있습니다)
 - 저장소: https://github.com/mrdoolee/galaxy-scope (`main`에 push하면 Vercel 프로젝트 `galaxy-scope`가 자동으로 배포합니다)
 
 ## 학생은 이렇게 합니다

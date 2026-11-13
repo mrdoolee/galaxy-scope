@@ -1,4 +1,4 @@
-import { load, save, clear, newGame, repairState } from '../logic/save.js';
+import { load, save, clear, newGame, repairState, collectedGame, skipTarget } from '../logic/save.js';
 import { assignMission, resumeNight, settleMission } from '../logic/night.js';
 import { OBJECTS } from '../data/objects.js';
 import { ZONES } from '../data/zones.js';
@@ -19,10 +19,30 @@ function storage() {
   }
 }
 
+// 건너뛰기 링크: 주소에 ?skip=sort가 있으면 카드를 다 모은 판을 만들어 저장하고(하던 판은 덮어쓴다) 주소에서 그 값을 지운다.
+// 값을 지워 두므로 새로 고침해도 묶던 것이 처음으로 돌아가지 않는다. 첫 화면보다 먼저 불러야 단추 글이 맞는다(main.js).
+// 저장이 막힌 브라우저에서도 이 판으로 시작하게 skipState에 들고 있다가 bootState가 쓴다.
+let skipState = null;
+export function applySkipLink(win = window) {
+  try {
+    const url = new URL(win.location.href);
+    if (!skipTarget(url.search)) return false;
+    skipState = collectedGame(Math.floor(Math.random() * 2 ** 31), DECK_IDS);
+    const st = storage();
+    if (st) save(st, skipState);
+    url.searchParams.delete('skip');
+    win.history.replaceState(null, '', url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // 저장된 판을 불러오고, 없으면 새 판을 만들어 저장한다.
 export function bootState(registry) {
   const st = storage();
-  let state = st ? load(st) : null;
+  let state = skipState ?? (st ? load(st) : null);
+  skipState = null;
   if (!state) {
     state = newGame(Math.floor(Math.random() * 2 ** 31));
     if (st) save(st, state);

@@ -25,6 +25,18 @@ export function newGame(seed) {
   };
 }
 
+// 건너뛰기 링크(?skip=sort)용: 필수 카드를 다 모아 묶기를 시작하기 직전인 판. 수업 시연과 점검에 쓴다.
+// 촬영 별점과 동트기 전 완료는 없는 것으로 둔다(찍은 적이 없다).
+export function collectedGame(seed, deckIds) {
+  return { ...newGame(seed), foundIds: [...deckIds], phase: 'sort', introSeen: true };
+}
+
+// 주소의 건너뛰기 값. 아는 값('sort')만 돌려주고 그 밖에는 null.
+export function skipTarget(search) {
+  const value = new URLSearchParams(search ?? '').get('skip');
+  return value === 'sort' ? value : null;
+}
+
 function isPlainObject(v) {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
