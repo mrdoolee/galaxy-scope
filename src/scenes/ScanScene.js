@@ -1,24 +1,24 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, SCENES } from '../config/game.js';
-import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS, NIGHT_SAVE_MS } from '../config/balance.js';
+import { ZONE_W, ZONE_H, VIEW_RADIUS, LOCK_RADIUS, SMUDGE_SPEED, BLUR_SPEED, IDLE_NUDGE_MS, NIGHT_SAVE_MS, SHOT_RETRY_MS } from '../config/balance.js';
 import { ZONES } from '../data/zones.js';
 import { OBJECTS } from '../data/objects.js';
 import { SCAN_TEXT, MAP_TEXT, BONUS_TEXT, NIGHT_TEXT } from '../data/copy.js';
 import { chartLayout, chartGuides } from '../logic/chart.js';
 import { startGuide, zoneClues } from '../logic/guide.js';
-import { viewState, visibleSmudges, lockTarget, isSharp, focusError, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
+import { viewState, visibleSmudges, lockTarget, focusError, gaugeValue, nudgeDirection, focusTarget, focusBlur, clampView } from '../logic/scan.js';
 import { createDrag, createSpeedMeter, dragStep } from '../logic/drag.js';
 import { makeRng, seedFor } from '../logic/rng.js';
 import { inBonus, bonusProgress } from '../logic/bonus.js';
 import { tickNight, isDawn, endDay, nightTotal, clockRuns } from '../logic/night.js';
-import { captureRating } from '../logic/rating.js';
+import { shotStars } from '../logic/rating.js';
 import { recordCapture } from '../logic/capture.js';
 import { DECK, DECK_IDS, DECK_SIZE, getState, persist, commit, stash, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
 import { softTexture, photoKey, coverImage } from './ui/photoTextures.js';
 import { remainingTargets } from './ui/request.js';
-import { makeFocusSlider } from './ui/focusSlider.js';
+import { makeFocusGauge } from './ui/focusGauge.js';
 import { makeMiniMap } from './ui/miniMap.js';
 import { addChartSky } from './ui/chartSky.js';
 import { makeTargetPanel, panelTargets } from './ui/targetPanel.js';
@@ -186,17 +186,14 @@ export default class ScanScene extends Phaser.Scene {
     }).setEnabled(false);
     this.cancelBtn = makeButton(this, RIGHT_X, 380, { w: 200, h: 96, label: SCAN_TEXT.cancel, onTap: () => this.leaveFocus() });
     this.cancelBtn.container.setVisible(false);
-    // 촬영 버튼: 확대 버튼 자리(오른손 엄지가 닿는 곳, 왼손은 아래 눈금을 끈다). 초점이 맞을 때만 켜지고 빛나는 테가 돈다.
+    // 촬영 버튼: 확대 버튼 자리(오른손 엄지가 닿는 곳). 눈금이 혼자 오가는 동안 사진이 또렷해지는 순간에 누른다.
     this.shutterBtn = makeButton(this, RIGHT_X, 560, {
       w: 200, h: 180, label: NIGHT_TEXT.shutter, icon: 'icon-shutter', iconSize: 124, size: 28, onTap: () => this.shoot(),
-    }).setEnabled(false);
-    this.shutterGlow = this.add.graphics().lineStyle(7, COLOR.brassLight, 1).strokeCircle(0, -22, 74).setVisible(false);
-    this.shutterBtn.container.addAt(this.shutterGlow, 0);
-    this.tweens.add({ targets: this.shutterGlow, alpha: 0.3, duration: 450, yoyo: true, repeat: -1 });
+    });
     this.shutterBtn.container.setVisible(false);
 
-    this.slider = makeFocusSlider(this, CX, 670, 480);
-    this.slider.container.setVisible(false);
+    this.gauge = makeFocusGauge(this, CX, 670, 480);
+    this.gauge.container.setVisible(false);
   }
 
   // 왼쪽 판: 구역 안 찾은 수, 전체 수집 수, 지금 찾을 임무 대상과 단서
@@ -219,13 +216,12 @@ export default class ScanScene extends Phaser.Scene {
     this.targetPanel.set(panelTargets(request, this.zoneId, this.found, this.clues), request?.kind ?? null);
   }
 
-  // 끌기와 초점 눈금 잡기를 모두 놓는다. 세로로 돌려 게임이 멈출 때(game pause), 창 전환(blur, hidden),
+  // 끌기를 놓는다. 세로로 돌려 게임이 멈출 때(game pause), 창 전환(blur, hidden),
   // 손가락이 화면 밖으로 나갈 때, 해가 뜨고 질 때 부른다. 멈춘 동안의 손가락은 다시 움직여도 끌기로 이어지지 않는다.
   stopDrag() {
     this.drag.cancel();
     this.meter.reset(performance.now());
     this.speed = 0;
-    this.slider.release();
   }
 
   // ── 입력: 한 손가락 끌기. 두 번째 손가락, 화면 밖, 창 전환이면 끌기를 끝내고 속도 0.
@@ -275,7 +271,7 @@ export default class ScanScene extends Phaser.Scene {
   update(_time, delta) {
     this.tickClock(delta);
     if (this.mode === 'sweep') this.updateSweep(delta);
-    else if (this.mode === 'focus') this.updateFocus();
+    else if (this.mode === 'focus') this.updateFocus(delta);
   }
 
   // ── 밤 시계: 모으기 중 훑기·초점 상태에서만 간다(카드 화면, 낮, 보너스 관측, 게임이 멈춘 동안은 update가 오지 않거나 건너뛴다).
@@ -393,25 +389,26 @@ export default class ScanScene extends Phaser.Scene {
     this.stopDrag();
     this.focusId = this.lockId;
     this.focusTargetValue = focusTarget(getState(this).seed, this.focusId);
-    // 별점의 "가운데" 몫: 확대를 누른 순간 시야 가운데와 천체 사이 거리
-    const p = this.placed.find((q) => q.id === this.focusId);
-    this.centerOffset = Math.hypot(p.x - this.view.x, p.y - this.view.y);
+    this.focusMs = 0;
+    this.shotHold = false;
     this.sky.setVisible(false);
     this.reticle.setVisible(false);
     this.nudge.setVisible(false);
     this.showFocusPhoto(this.focusId);
-    this.slider.setValue(0);
-    this.slider.container.setVisible(true);
+    this.gauge.setValue(0);
+    this.gauge.container.setVisible(true);
     this.zoomBtn.container.setVisible(false);
     this.cancelBtn.container.setVisible(true);
     this.shutterBtn.container.setVisible(true);
-    this.setShutter(false);
+    this.shutterBtn.setEnabled(true);
+    this.status.setText(SCAN_TEXT.focusGuide);
   }
 
   leaveFocus() {
     this.mode = 'sweep';
-    this.slider.release();
-    this.slider.container.setVisible(false);
+    this.retryTimer?.remove();
+    this.shotHold = false;
+    this.gauge.container.setVisible(false);
     this.focusLayer.setVisible(false);
     this.sky.setVisible(true);
     this.reticle.setVisible(true);
@@ -422,24 +419,33 @@ export default class ScanScene extends Phaser.Scene {
     this.lockId = undefined; // 다음 프레임에 버튼과 조준 원을 다시 그린다
   }
 
-  updateFocus() {
-    const value = this.slider.value;
-    this.sharp.setAlpha((1 - focusBlur(value, this.focusTargetValue)) ** 2);
-    const on = isSharp(value, this.focusTargetValue);
-    if (on !== this.shutterBtn.enabled) this.setShutter(on);
+  // 초점 눈금은 혼자 오간다. 사진은 눈금이 숨은 목표에 가까울수록 또렷해진다.
+  updateFocus(delta) {
+    if (this.shotHold) return; // 촬영 실패 글을 보여 주는 동안 눈금은 멈춰 있다
+    this.focusMs += delta;
+    this.gauge.setValue(gaugeValue(this.focusMs));
+    this.sharp.setAlpha((1 - focusBlur(this.gauge.value, this.focusTargetValue)) ** 2);
   }
 
-  // 촬영 버튼 켜고 끄기: 켜질 때 빛나는 테와 한 번 튀는 움직임, 안내 글로 알린다.
-  setShutter(on) {
-    this.shutterBtn.setEnabled(on);
-    this.shutterGlow.setVisible(on);
-    this.status.setText(on ? SCAN_TEXT.sharp : SCAN_TEXT.focusGuide);
-    if (on) this.tweens.add({ targets: this.shutterBtn.container, scale: { from: 1.15, to: 1 }, duration: 260, ease: 'Back.out' });
-  }
-
+  // 촬영: 누른 순간의 초점 오차로 별점을 매긴다. 너무 어긋났으면 찍히지 않고, 잠깐 뒤 눈금이 다시 움직인다.
   shoot() {
-    if (this.mode !== 'focus' || !isSharp(this.slider.value, this.focusTargetValue)) return;
-    this.capture(this.focusId, captureRating(this.centerOffset, focusError(this.slider.value, this.focusTargetValue)));
+    if (this.mode !== 'focus' || this.shotHold) return;
+    const stars = shotStars(focusError(this.gauge.value, this.focusTargetValue));
+    if (stars > 0) {
+      this.cameras.main.flash(160, 255, 255, 255);
+      this.capture(this.focusId, { stars });
+      return;
+    }
+    this.shotHold = true;
+    this.shutterBtn.setEnabled(false);
+    this.status.setText(SCAN_TEXT.retry);
+    this.tweens.add({ targets: this.focusLayer, x: { from: CX - 10, to: CX + 10 }, duration: 60, yoyo: true, repeat: 2, onComplete: () => this.focusLayer.setX(CX) });
+    this.retryTimer = this.time.delayedCall(SHOT_RETRY_MS, () => {
+      this.shotHold = false;
+      if (this.mode !== 'focus') return;
+      this.shutterBtn.setEnabled(true);
+      this.status.setText(SCAN_TEXT.focusGuide);
+    });
   }
 
   // ── 카드 얻기: 찾은 목록·별점·임무 완료를 한 번에 저장하고 "미확인 천체" 카드를 보여 준다
@@ -453,8 +459,7 @@ export default class ScanScene extends Phaser.Scene {
     this.found = new Set(result.state.foundIds);
     this.tonightIds.push(id);
 
-    this.slider.release();
-    this.slider.container.setVisible(false);
+    this.gauge.container.setVisible(false);
     this.cancelBtn.container.setVisible(false);
     this.shutterBtn.container.setVisible(false);
     this.status.setText(SCAN_TEXT.got);

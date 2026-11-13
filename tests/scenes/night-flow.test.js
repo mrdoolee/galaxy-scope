@@ -3,7 +3,7 @@ import { newGame, save, load, SAVE_KEY } from '../../src/logic/save.js';
 import { assignMission, tickNight, isDawn, endDay, completeMission, resumeNight, nightLength } from '../../src/logic/night.js';
 import { recordCapture } from '../../src/logic/capture.js';
 import { refreshRequest, bootState, DECK_IDS } from '../../src/scenes/gameState.js';
-import { NIGHT_TEXT, RATING_TEXT, ratingLine, nightOrdinal } from '../../src/data/copy.js';
+import { NIGHT_TEXT, RATING_TEXT, SCAN_TEXT, ratingLine, nightOrdinal } from '../../src/data/copy.js';
 import { SCORE } from '../../src/config/balance.js';
 
 const BANNED = ['성운', '성단', '방출', '반사', '암흑', '산개', '구상', '은하'];
@@ -166,6 +166,7 @@ describe('한 판 전체', () => {
 
 describe('밤 글', () => {
   const all = [
+    SCAN_TEXT.focusGuide, SCAN_TEXT.retry,
     NIGHT_TEXT.nightLabel(1), NIGHT_TEXT.dawn, NIGHT_TEXT.dusk, NIGHT_TEXT.tonight(2), NIGHT_TEXT.missionEarly,
     NIGHT_TEXT.missionDone, NIGHT_TEXT.toNextMission, NIGHT_TEXT.shutter, NIGHT_TEXT.earlyBonus(SCORE.earlyMission),
     ...Object.values(RATING_TEXT),
@@ -182,6 +183,7 @@ describe('밤 글', () => {
     expect(NIGHT_TEXT.missionDone).toBe('임무를 마쳤어요.');
     expect(NIGHT_TEXT.toNextMission).toBe('다음 임무 받기');
     expect(NIGHT_TEXT.shutter).toBe('촬영');
+    expect(SCAN_TEXT.retry).toBe('다시 촬영해 보아요.');
     expect(NIGHT_TEXT.earlyBonus(50)).toContain('50');
   });
 
@@ -207,11 +209,12 @@ describe('밤 글', () => {
     }
   });
 
-  it('별점 한 줄은 무엇으로 별을 얻었는지 말한다', () => {
-    expect(ratingLine({ center: true, focus: true })).toBe(RATING_TEXT.both);
-    expect(ratingLine({ center: true, focus: false })).toBe(RATING_TEXT.center);
-    expect(ratingLine({ center: false, focus: true })).toBe(RATING_TEXT.focus);
-    expect(ratingLine({ center: false, focus: false })).toBe(RATING_TEXT.base);
-    expect(new Set(Object.values(RATING_TEXT)).size).toBe(4);
+  it('별점 한 줄은 초점이 얼마나 맞았는지 말한다(별 1~3개마다 다른 문장)', () => {
+    expect(ratingLine(3)).toBe(RATING_TEXT[3]);
+    expect(ratingLine(2)).toBe(RATING_TEXT[2]);
+    expect(ratingLine(1)).toBe(RATING_TEXT[1]);
+    expect(ratingLine(0)).toBe(RATING_TEXT[1]);
+    expect(ratingLine(7)).toBe(RATING_TEXT[3]);
+    expect(new Set(Object.values(RATING_TEXT)).size).toBe(3);
   });
 });

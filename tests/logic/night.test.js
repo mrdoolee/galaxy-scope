@@ -3,7 +3,7 @@ import {
   nightLength, assignMission, tickNight, isDawn, endDay, missionDone, completeMission, resumeNight, settleMission,
   nightTotal, dayTimeline, clockRuns,
 } from '../../src/logic/night.js';
-import { DAY_WAIT_MS, DAY_FADE_MS, DUSK_HOLD_MS } from '../../src/config/balance.js';
+import { DAY_WAIT_MS, DAY_FADE_MS, DAY_GLOW_MS, DUSK_HOLD_MS } from '../../src/config/balance.js';
 
 const req3 = { kind: 'picture', zoneId: 'orion', targetIds: ['a', 'b', 'c'] };
 const started = () => assignMission(newGame(1), req3);
@@ -174,18 +174,25 @@ describe('clockRuns', () => {
 });
 
 describe('dayTimeline', () => {
-  it('밝아지고, 해가 DAY_WAIT_MS 동안 지나가고, 어두워진 뒤 잠깐 있다가 끝난다', () => {
-    expect(dayTimeline(0)).toEqual({ light: 0, sun: 0, dusk: false, done: false });
-    expect(dayTimeline(DAY_FADE_MS).light).toBe(1);
-    const mid = dayTimeline(DAY_WAIT_MS / 2);
-    expect(mid.light).toBe(1);
-    expect(mid.sun).toBeCloseTo(0.5);
-    expect(mid.dusk).toBe(false);
+  it('해돋이 빛 → 낮 → 해넘이 빛 → 밤, 어두워진 뒤 잠깐 있다가 끝난다', () => {
+    expect(dayTimeline(0)).toEqual({ sunrise: 0, day: 0, sunset: 0, light: 0, dusk: false, done: false });
+    // 해돋이 빛이 다 번졌을 때는 아직 낮이 아니다
+    expect(dayTimeline(DAY_FADE_MS)).toMatchObject({ sunrise: 1, day: 0, sunset: 0, light: 1 });
+    expect(dayTimeline(DAY_FADE_MS + DAY_GLOW_MS / 2).day).toBeCloseTo(0.5);
+    // 한낮
+    expect(dayTimeline(DAY_WAIT_MS / 2)).toMatchObject({ sunrise: 1, day: 1, sunset: 0, light: 1, dusk: false });
+    // 해넘이 빛이 덮기 시작해서 DAY_WAIT_MS에 다 덮는다(그 아래 두 겹은 치운다)
+    expect(dayTimeline(DAY_WAIT_MS - DAY_GLOW_MS / 2).sunset).toBeCloseTo(0.5);
     expect(dayTimeline(DAY_WAIT_MS - 1).dusk).toBe(false);
-    expect(dayTimeline(DAY_WAIT_MS)).toMatchObject({ light: 1, sun: 1, dusk: true, done: false });
-    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS / 2).light).toBeCloseTo(0.5);
-    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS)).toMatchObject({ light: 0, done: false });
-    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS + DUSK_HOLD_MS)).toMatchObject({ light: 0, sun: 1, dusk: true, done: true });
+    expect(dayTimeline(DAY_WAIT_MS)).toMatchObject({ sunrise: 0, day: 0, sunset: 1, light: 1, dusk: true, done: false });
+    const fading = dayTimeline(DAY_WAIT_MS + DAY_FADE_MS / 2);
+    expect(fading.sunset).toBeCloseTo(0.5);
+    expect(fading.light).toBeCloseTo(0.5);
+    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS)).toMatchObject({ sunset: 0, light: 0, done: false });
+    expect(dayTimeline(DAY_WAIT_MS + DAY_FADE_MS + DUSK_HOLD_MS)).toMatchObject({ sunrise: 0, day: 0, sunset: 0, light: 0, dusk: true, done: true });
+  });
+  it('해돋이와 해넘이 사이에 한낮이 있다', () => {
+    expect(DAY_FADE_MS + DAY_GLOW_MS).toBeLessThan(DAY_WAIT_MS - DAY_GLOW_MS);
   });
   it('낮 기다림은 5초', () => {
     expect(DAY_WAIT_MS).toBe(5000);

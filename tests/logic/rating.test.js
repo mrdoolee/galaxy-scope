@@ -1,26 +1,27 @@
 import { newGame } from '../../src/logic/save.js';
-import { rateCapture, captureRating, recordRating } from '../../src/logic/rating.js';
+import { FOCUS_TOLERANCE, FOCUS_STAR2, FOCUS_STAR3 } from '../../src/config/balance.js';
+import { shotStars, recordRating } from '../../src/logic/rating.js';
 
-describe('rateCapture', () => {
-  it('중심과 초점 두 가지로 1~3개', () => {
-    expect(rateCapture(80, 0.07)).toBe(1);
-    expect(rateCapture(30, 0.07)).toBe(2);
-    expect(rateCapture(80, 0.02)).toBe(2);
-    expect(rateCapture(30, 0.02)).toBe(3);
+describe('shotStars', () => {
+  it('초점이 잘 맞으면 별 3개, 조금 흐리면 2개, 흐리면 1개', () => {
+    expect(shotStars(0)).toBe(3);
+    expect(shotStars(0.02)).toBe(3);
+    expect(shotStars(0.07)).toBe(2);
+    expect(shotStars(0.12)).toBe(1);
   });
-  it('경계값은 좋은 쪽', () => {
-    expect(rateCapture(35, 0.03)).toBe(3);
-    expect(rateCapture(35.1, 0.031)).toBe(1);
+  it('너무 어긋나면 0(촬영 실패, 다시 찍는다)', () => {
+    expect(shotStars(0.2)).toBe(0);
+    expect(shotStars(1)).toBe(0);
+    expect(shotStars(NaN)).toBe(0);
   });
-});
-
-describe('captureRating', () => {
-  it('별 수와 함께 무엇으로 별을 더 얻었는지 알려 준다(rateCapture와 같은 수)', () => {
-    expect(captureRating(30, 0.02)).toEqual({ stars: 3, center: true, focus: true });
-    expect(captureRating(30, 0.07)).toEqual({ stars: 2, center: true, focus: false });
-    expect(captureRating(80, 0.02)).toEqual({ stars: 2, center: false, focus: true });
-    expect(captureRating(80, 0.07)).toEqual({ stars: 1, center: false, focus: false });
-    for (const [c, f] of [[35, 0.03], [35.1, 0.031], [0, 0], [200, 0.08]]) expect(captureRating(c, f).stars).toBe(rateCapture(c, f));
+  it('경계값은 좋은 쪽으로, 오차의 부호는 보지 않는다', () => {
+    expect(shotStars(FOCUS_STAR3)).toBe(3);
+    expect(shotStars(FOCUS_STAR2)).toBe(2);
+    expect(shotStars(FOCUS_TOLERANCE)).toBe(1);
+    expect(shotStars(FOCUS_TOLERANCE + 0.001)).toBe(0);
+    expect(shotStars(-0.02)).toBe(3);
+    expect(FOCUS_STAR3).toBeLessThan(FOCUS_STAR2);
+    expect(FOCUS_STAR2).toBeLessThan(FOCUS_TOLERANCE);
   });
 });
 

@@ -234,8 +234,8 @@ export default class SortScene extends Phaser.Scene {
       return;
     }
     if (r.outcome === 'wrong') {
-      this.bubble.say(HINTS[this.stage][r.hintLevel - 1], { hint: true });
-      // 어느 카드가 틀렸는지는 힌트 2단계부터, 판정 한 번에 몇 장만 보여 준다.
+      // 처음 틀리면 몇 장이 어긋났는지만 말하고 다시 살펴보게 한다. 어느 카드인지(노란 테)는 그다음에도 틀렸을 때부터, 판정 한 번에 몇 장만.
+      this.bubble.say(r.hintLevel === 1 ? SORT_TEXT.wrongCount(r.wrongIds.length) : HINTS[this.stage][r.hintLevel - 1], { hint: true });
       this.glowIds = new Set(pickHighlights(r.wrongIds, r.hintLevel, r.state.seed, this.stage, r.state.wrongSubmits[this.stage]));
       this.refreshGlows();
       return;

@@ -1,4 +1,4 @@
-import { NIGHT_BASE_MS, NIGHT_PER_TARGET_MS, DAY_WAIT_MS, DAY_FADE_MS, DUSK_HOLD_MS } from '../config/balance.js';
+import { NIGHT_BASE_MS, NIGHT_PER_TARGET_MS, DAY_WAIT_MS, DAY_FADE_MS, DAY_GLOW_MS, DUSK_HOLD_MS } from '../config/balance.js';
 
 export function nightLength(targetCount) {
   return NIGHT_BASE_MS + targetCount * NIGHT_PER_TARGET_MS;
@@ -79,16 +79,25 @@ export function clockRuns({ phase, bonus, mode, hasMission, dayWait }) {
   return phase === 'collect' && !bonus && (mode === 'sweep' || mode === 'focus') && hasMission && !dayWait;
 }
 
-// 낮 기다림의 흐름(경과 시간 → 보이는 모습). 하늘이 DAY_FADE_MS 동안 밝아지고(light 0→1), 해가 DAY_WAIT_MS 동안
-// 지나가며(sun 0→1), 그 뒤 DAY_FADE_MS 동안 어두워지고 DUSK_HOLD_MS만큼 "다시 밤" 말을 보여 준 뒤 끝난다.
+// 낮 기다림의 흐름(경과 시간 → 보이는 모습). 밤하늘 위에 세 겹을 차례로 덮는다.
+//   sunrise: DAY_FADE_MS 동안 해돋이 빛이 번진다(0→1)
+//   day:     이어서 DAY_GLOW_MS 동안 밝은 낮이 된다(0→1)
+//   sunset:  DAY_WAIT_MS가 되기 DAY_GLOW_MS 전부터 해넘이 빛이 덮고(0→1), DAY_WAIT_MS부터 DAY_FADE_MS 동안 밤으로 사라진다(1→0)
+//   light:   하늘 전체의 밝기(별과 얼룩이 이만큼 사라진다)
+// 다 어두워지면 DUSK_HOLD_MS만큼 "다시 밤" 말을 보여 준 뒤 끝난다(done).
 export function dayTimeline(elapsedMs) {
   const t = Math.max(0, elapsedMs);
   const clamp01 = (v) => Math.min(1, Math.max(0, v));
   const rise = clamp01(t / DAY_FADE_MS);
-  const set = clamp01((t - DAY_WAIT_MS) / DAY_FADE_MS);
+  const toDay = clamp01((t - DAY_FADE_MS) / DAY_GLOW_MS);
+  const toSet = clamp01((t - (DAY_WAIT_MS - DAY_GLOW_MS)) / DAY_GLOW_MS);
+  const fall = clamp01((t - DAY_WAIT_MS) / DAY_FADE_MS);
+  const covered = toSet >= 1; // 해넘이 빛이 다 덮은 뒤에는 아래 두 겹을 치운다
   return {
-    light: Math.min(rise, 1 - set),
-    sun: clamp01(t / DAY_WAIT_MS),
+    sunrise: covered ? 0 : rise,
+    day: covered ? 0 : toDay,
+    sunset: toSet * (1 - fall),
+    light: Math.min(rise, 1 - fall),
     dusk: t >= DAY_WAIT_MS,
     done: t >= DAY_WAIT_MS + DAY_FADE_MS + DUSK_HOLD_MS,
   };

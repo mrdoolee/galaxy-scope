@@ -79,7 +79,8 @@ export const SCAN_TEXT = {
   tooFast: '너무 빨라요! 천천히 움직여야 보여요.',
   found: '무언가 있어요! 확대해 보세요.',
   zoom: '확대',
-  focusGuide: '눈금을 좌우로 움직여 초점을 맞추세요.',
+  focusGuide: '사진이 가장 또렷해지는 순간에 촬영을 누르세요.',
+  retry: '다시 촬영해 보아요.',
   cancel: '그만두기',
   got: '카드를 얻었어요!',
   unknown: '미확인 천체',
@@ -92,7 +93,6 @@ export const SCAN_TEXT = {
   target: '찾을 천체',      // 왼쪽 판 머리글: 이 구역에서 지금 찾을 임무 대상 하나
   nextTarget: '다음',       // 임무 대상이 여럿일 때 넘겨 보는 버튼
   targetIndex: (i, n) => `${i} / ${n}`,
-  sharp: '초점이 맞았어요! 촬영 버튼을 누르세요.',
 };
 
 // 몇째 밤인지: 1~10은 우리말 서수(첫째~열째), 11부터는 "n번째". 0 이하나 숫자가 아니면 "첫째".
@@ -115,15 +115,13 @@ export const NIGHT_TEXT = {
   earlyBonus: (points) => `보너스 +${points}점`,
 };
 
-// 카드를 얻는 화면의 별점 한 줄: 무엇으로 별을 얻었는지.
+// 카드를 얻는 화면의 별점 한 줄: 초점이 얼마나 잘 맞았는지(별 1~3개).
 export const RATING_TEXT = {
-  both: '가운데도 초점도 아주 정확해요!',
-  center: '가운데에 잘 맞췄어요.',
-  focus: '초점이 아주 정확해요.',
-  base: '가운데와 초점을 더 맞추면 별이 늘어요.',
+  3: '초점이 딱 맞았어요! 아주 또렷한 사진이에요.',
+  2: '초점이 조금 흐려요. 그래도 잘 찍었어요.',
+  1: '사진이 흐리게 찍혔어요. 또렷한 순간을 노려 보세요.',
 };
-export const ratingLine = ({ center, focus }) =>
-  RATING_TEXT[center && focus ? 'both' : center ? 'center' : focus ? 'focus' : 'base'];
+export const ratingLine = (stars) => RATING_TEXT[Math.min(3, Math.max(1, Math.round(stars) || 1))];
 
 // 쉬운 말 의뢰 문장에서 "…것"까지만 떼어 여러 대상을 한 줄로 보여 줄 때 쓴다.
 export const plainLook = (sentence) => sentence.replace(/을 찾아 주세요\.$/, '');
@@ -147,6 +145,8 @@ export const TYPE_INFO = {
 export const SORT_TEXT = {
   judge: '판정',
   incomplete: '아직 놓지 않은 카드가 있어요',
+  // 처음 틀렸을 때: 어느 카드인지는 짚지 않고 몇 장인지만 알려 준다.
+  wrongCount: (n) => `카드 ${n}장이 어울리지 않는 묶음에 있어요. 다시 살펴보세요.`,
   correct: '맞았어요!',
   close: '닫기',
   putIn: (label) => `${label}에 넣기`,

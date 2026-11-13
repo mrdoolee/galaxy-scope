@@ -1,7 +1,7 @@
-import { clampView, viewState, visibleSmudges, lockTarget, focusError, isSharp, nudgeDirection } from '../../src/logic/scan.js';
+import { clampView, viewState, visibleSmudges, lockTarget, focusError, isSharp, gaugeValue, nudgeDirection } from '../../src/logic/scan.js';
 import * as balance from '../../src/config/balance.js';
 
-const { FOCUS_TOLERANCE } = balance;
+const { FOCUS_TOLERANCE, FOCUS_SWEEP_MS } = balance;
 
 test('초점을 머물러 맞추던 시간(FOCUS_HOLD_MS)은 없다: 촬영 버튼으로 찍는다', () => {
   expect('FOCUS_HOLD_MS' in balance).toBe(false);
@@ -53,9 +53,9 @@ describe('focusError, isSharp', () => {
     expect(focusError(0.55, 0.5)).toBeCloseTo(0.05);
     expect(focusError(0.4, 0.5)).toBeCloseTo(0.1);
   });
-  it('허용 오차 안이면 촬영할 수 있다(머무는 시간은 보지 않는다)', () => {
+  it('허용 오차 안이면 촬영이 된다', () => {
     expect(isSharp(0.55, 0.5)).toBe(true);
-    expect(isSharp(0.5 + FOCUS_TOLERANCE, 0.5)).toBe(true);
+    expect(isSharp(0.5 + FOCUS_TOLERANCE - 0.001, 0.5)).toBe(true);
     expect(isSharp(0.5 - FOCUS_TOLERANCE - 0.001, 0.5)).toBe(false);
     expect(isSharp(0.7, 0.5)).toBe(false);
   });
@@ -76,5 +76,23 @@ describe('nudgeDirection', () => {
   });
   it('모두 찾았으면 null', () => {
     expect(nudgeDirection(view, [at('a', 100)], new Set(['a']))).toBeNull();
+  });
+});
+
+describe('gaugeValue: 혼자 오가는 초점 눈금', () => {
+  it('0에서 시작해 FOCUS_SWEEP_MS에 끝(1)에 닿고, 다시 그만큼 지나면 0으로 돌아온다', () => {
+    expect(gaugeValue(0)).toBe(0);
+    expect(gaugeValue(FOCUS_SWEEP_MS / 2)).toBeCloseTo(0.5);
+    expect(gaugeValue(FOCUS_SWEEP_MS)).toBeCloseTo(1);
+    expect(gaugeValue(FOCUS_SWEEP_MS * 1.5)).toBeCloseTo(0.5);
+    expect(gaugeValue(FOCUS_SWEEP_MS * 2)).toBeCloseTo(0);
+    expect(gaugeValue(FOCUS_SWEEP_MS * 2.25)).toBeCloseTo(0.25);
+  });
+  it('언제나 0~1 안이고 음수 시간은 0으로 본다', () => {
+    for (let t = 0; t < FOCUS_SWEEP_MS * 5; t += 37) {
+      expect(gaugeValue(t)).toBeGreaterThanOrEqual(0);
+      expect(gaugeValue(t)).toBeLessThanOrEqual(1);
+    }
+    expect(gaugeValue(-100)).toBe(0);
   });
 });

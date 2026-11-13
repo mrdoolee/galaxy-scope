@@ -14,7 +14,7 @@ const BTN = { w: 320, h: 100 };
 
 /**
  * showCaptureCard(scene, opts) -> layer(Container)
- *   opts: { id, bonus, zoneName, count: { found, total }, rating: { stars, center, focus },
+ *   opts: { id, bonus, zoneName, count: { found, total }, rating: { stars },
  *           mission: null | { early }, complete, zoneDone, onNext, onMap, onSort, onNextMission }
  *   complete(필수 카드를 다 모음)면 「묶기 시작」 하나, 임무를 마쳤으면 「다음 임무 받기」 하나,
  *   그 밖에는 「계속 훑기」(구역에 남은 것이 있을 때)와 「지도로 돌아가기」.
@@ -41,7 +41,7 @@ export function showCaptureCard(scene, opts) {
   line(bonus ? BONUS_TEXT.count(opts.count.found, opts.count.total) : MAP_TEXT.count(opts.count.found, opts.count.total), { size: 30, bold: true, gap: 16 });
   layer.add(addStarRating(scene, BX, cy + 28, rating.stars));
   cy += 56 + 12;
-  line(ratingLine(rating), { color: COLOR.textBrass, gap: 22 });
+  line(ratingLine(rating.stars), { color: COLOR.textBrass, gap: 22 });
 
   const button = (label, onTap, size = 30) => {
     layer.add(makeButton(scene, BX, cy + BTN.h / 2, { ...BTN, label, size, onTap }).container);

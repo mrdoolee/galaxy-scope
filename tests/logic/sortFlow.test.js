@@ -168,3 +168,13 @@ describe('shuffledIds', () => {
     expect(ids).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
   });
 });
+
+describe('처음 틀렸을 때의 말', () => {
+  it('몇 장이 어긋났는지와 다시 살펴보라는 말만 한다(분류 용어 없음)', async () => {
+    const { SORT_TEXT } = await import('../../src/data/copy.js');
+    const s = SORT_TEXT.wrongCount(3);
+    expect(s).toContain('3장');
+    expect(s).toContain('다시 살펴보세요');
+    for (const w of ['성운', '성단', '방출', '반사', '암흑', '산개', '구상']) expect(s).not.toContain(w);
+  });
+});
