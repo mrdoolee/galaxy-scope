@@ -8,6 +8,7 @@ import SortScene from './scenes/SortScene.js';
 import RegistryScene from './scenes/RegistryScene.js';
 import ResultScene from './scenes/ResultScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
+import { initLanding } from './landing.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -25,6 +26,8 @@ const game = new Phaser.Game({
   loader: { timeout: 20000 },
   scene: [BootScene, SkyMapScene, ScanScene, SortScene, RegistryScene, ResultScene, CreditsScene],
 });
+
+initLanding();
 
 // 세로 화면이면 덮개를 보이고 게임을 멈춘다. 상태가 바뀔 때만 멈추거나 다시 움직인다.
 // force: 탭이 다시 보이게 되면 지금 방향을 다시 적용한다(세로인 채로 돌아오면 계속 멈춰 있게).

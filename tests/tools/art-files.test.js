@@ -8,6 +8,13 @@ test.each(names)('public/art/%s 존재하고 700KB 미만', (n) => {
   expect(statSync(`public/art/${n}`).size).toBeLessThan(700 * 1024);
 });
 
+test('랜딩 그림 landing-hero.jpg: 있고 500KB 미만, 가로 그림', async () => {
+  expect(existsSync('public/art/landing-hero.jpg')).toBe(true);
+  expect(statSync('public/art/landing-hero.jpg').size).toBeLessThan(500 * 1024);
+  const meta = await sharp('public/art/landing-hero.jpg').metadata();
+  expect(meta.width).toBeGreaterThan(meta.height);
+});
+
 import sharp from 'sharp';
 import { readFileSync } from 'node:fs';
 

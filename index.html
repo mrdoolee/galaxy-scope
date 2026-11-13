@@ -3,17 +3,80 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<title>GALAXY ARCHIVE</title>
+<title>별구름 수집가</title>
+<meta name="description" content="밤마다 망원경으로 은하수의 구름과 별 무리를 찾아 도감에 담는 중학교 2학년 과학 게임" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
 <style>
 html,body{margin:0;height:100%;background:#05070f;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #rotate{display:none;position:fixed;inset:0;z-index:10;background:#05070f;color:#fff;font:32px "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;align-items:center;justify-content:center;text-align:center}
 /* main.js가 토글하는 클래스로만 보인다 (판정은 src/config/orientation.js) */
 html.rotate #rotate{display:flex}
+
+/* ── 랜딩(첫 화면). 게임 위를 덮고 있다가 「관측 시작하기」를 누르면 사라진다(src/landing.js). 세로 화면에서도 보인다. */
+#landing{
+  --ink:#fdf6e3; --gold:#e8cf8f; --brass:#c9a45c; --night:#070b1c;
+  position:fixed;inset:0;z-index:20;overflow:hidden;background:var(--night);color:var(--ink);
+  font-family:"Gowun Batang","Nanum Myeongjo","Batang","Apple SD Gothic Neo","Malgun Gothic",serif;
+  display:flex;flex-direction:column;transition:opacity .5s ease, visibility .5s;
+}
+#landing.gone{opacity:0;visibility:hidden;pointer-events:none}
+#landing .hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:82% 62%}
+/* 글이 놓이는 왼쪽과 푸터가 놓이는 아래쪽을 어둡게 */
+#landing .veil{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(7,11,28,.86) 0%,rgba(7,11,28,.6) 34%,rgba(7,11,28,0) 62%),
+  linear-gradient(0deg,rgba(7,11,28,.82) 0%,rgba(7,11,28,0) 26%)}
+#landing .copy{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(12px,4vh,48px) clamp(20px,6vw,88px) 0;max-width:min(54vw,640px)}
+#landing .eyebrow{margin:0 0 clamp(4px,1.4vh,14px);font-size:clamp(13px,2.4vh,20px);letter-spacing:.32em;color:var(--gold)}
+#landing .eyebrow::before,#landing .eyebrow::after{content:"✦";margin:0 .6em;font-size:.8em;letter-spacing:0;opacity:.8}
+#landing .eyebrow::before{margin-left:0}
+#landing h1{margin:0;font-weight:700;font-size:clamp(34px,11.5vh,92px);line-height:1.12;letter-spacing:-.01em;word-break:keep-all;
+  text-shadow:0 0 28px rgba(232,207,143,.35),0 3px 0 rgba(5,7,15,.6)}
+#landing h1 em{font-style:normal;color:var(--gold)}
+#landing .tag{margin:clamp(8px,2.4vh,22px) 0 0;font-size:clamp(15px,3.3vh,24px);line-height:1.6;word-break:keep-all;text-shadow:0 2px 8px rgba(5,7,15,.9)}
+#landing .actions{display:flex;flex-wrap:wrap;align-items:center;gap:clamp(10px,2vw,22px);margin-top:clamp(12px,4vh,36px)}
+#landing button{font:inherit;font-weight:700;font-size:clamp(18px,4vh,28px);color:#2a1c05;cursor:pointer;
+  min-height:56px;padding:.55em 1.6em;border-radius:999px;border:2px solid #fff3cf;
+  background:linear-gradient(180deg,#f6e3ac 0%,#d9b667 55%,#b98f43 100%);
+  box-shadow:0 0 0 4px rgba(232,207,143,.18),0 10px 28px rgba(0,0,0,.5);transition:transform .15s ease, box-shadow .15s ease}
+#landing button:hover,#landing button:focus-visible{transform:translateY(-2px);box-shadow:0 0 0 6px rgba(232,207,143,.3),0 14px 32px rgba(0,0,0,.55);outline:none}
+#landing button:active{transform:translateY(1px)}
+#landing .teacher{color:var(--gold);font-size:clamp(14px,2.8vh,20px);text-underline-offset:.3em;min-height:44px;display:inline-flex;align-items:center}
+#landing footer{position:relative;padding:clamp(6px,1.6vh,14px) 16px calc(clamp(6px,1.6vh,14px) + env(safe-area-inset-bottom));
+  text-align:center;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:clamp(11px,2.2vh,14px);color:rgba(253,246,227,.78)}
+@media (orientation:portrait){
+  #landing .hero{object-position:74% 50%}
+  #landing .veil{background:linear-gradient(0deg,rgba(7,11,28,.94) 0%,rgba(7,11,28,.78) 42%,rgba(7,11,28,.1) 70%)}
+  #landing .copy{justify-content:flex-end;max-width:none;padding:0 28px 20px}
+  #landing h1{font-size:clamp(40px,13vw,84px)}
+  #landing .tag{font-size:clamp(16px,4.4vw,24px)}
+  #landing .eyebrow{font-size:clamp(13px,3.4vw,20px)}
+  #landing button{font-size:clamp(19px,5vw,28px)}
+  #landing .teacher{font-size:clamp(15px,4vw,20px)}
+  #landing footer{font-size:clamp(11px,2.9vw,14px)}
+}
+@media (prefers-reduced-motion:reduce){#landing,#landing button{transition:none}}
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="rotate">기기를 가로로 돌려 주세요</div>
+<div id="landing">
+  <img class="hero" src="/art/landing-hero.jpg" alt="언덕 위 작은 관측소 앞에서 아이가 빛나는 도감을 펼치고, 밤하늘의 빛 구름과 별 무리가 도감으로 내려오는 그림" />
+  <div class="veil"></div>
+  <div class="copy">
+    <p class="eyebrow">별빛 관측소 이야기</p>
+    <h1><em>별구름</em> 수집가</h1>
+    <p class="tag">밤마다 망원경으로 은하수를 살펴요.<br />빛나는 구름과 별 무리를 찾아 나만의 도감에 담아 보세요.</p>
+    <div class="actions">
+      <button id="landing-start" type="button">관측 시작하기</button>
+      <a class="teacher" href="teacher.html" target="_blank" rel="noopener">선생님 안내</a>
+    </div>
+  </div>
+  <footer>© 2026 Designed &amp; Developed by 두리쌤(@trdoolee). All rights reserved.</footer>
+</div>
 <script>document.addEventListener('contextmenu',e=>e.preventDefault());</script>
 <script type="module" src="/src/main.js"></script>
 </body>

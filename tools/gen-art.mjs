@@ -3,7 +3,7 @@
 //   node tools/gen-art.mjs --postprocess   (alpha cleanup of existing files, no API call, no key needed)
 // Reads OPENAI_API_KEY and OPENAI_IMAGE_MODEL from process.env only; never prints the key.
 // Skips files that already exist in public/art unless --force is given.
-// Optional per asset: deriveFrom (build from another existing file: keep its alpha, dark navy fill + dim brass outline, no API call), trim (cut transparent margins after cleanup), maxSide (shrink to fit inside this square).
+// Optional per asset: style (replaces the manifest-wide style sentence for this asset), a .jpg file name (saved as JPEG instead of PNG, for large opaque pictures), deriveFrom (build from another existing file: keep its alpha, dark navy fill + dim brass outline, no API call), trim (cut transparent margins after cleanup), maxSide (shrink to fit inside this square).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -151,7 +151,7 @@ async function main() {
       console.log(`wrote ${a.file}`);
       return;
     }
-    const body = { model, prompt: `${manifest.style} ${a.prompt}`, size: a.request_size, n: 1 };
+    const body = { model, prompt: `${a.style ?? manifest.style} ${a.prompt}`, size: a.request_size, n: 1 };
     if (a.transparent) body.background = 'transparent';
     const res = await fetch(GEN_URL, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (!res.ok) { console.error(`${a.file}: API ${res.status} ${redact(await res.text(), key).slice(0, 300)}`); return; }
@@ -163,7 +163,8 @@ async function main() {
     // trim: cut the transparent margin so the plate touches the image edges (needed for nine-slice), then cap the size.
     if (a.trim) img = await trimAlpha(await img.png().toBuffer());
     if (a.maxSide) img = sharp(await img.png().toBuffer()).resize(a.maxSide, a.maxSide, { fit: 'inside', withoutEnlargement: true });
-    await img.png(pngOpts(a)).toFile(resolve(outDir, a.file));
+    if (/\.jpe?g$/i.test(a.file)) await img.flatten({ background: '#05070f' }).jpeg({ quality: a.quality ?? 84, mozjpeg: true }).toFile(resolve(outDir, a.file));
+    else await img.png(pngOpts(a)).toFile(resolve(outDir, a.file));
     console.log(`wrote ${a.file}`);
   }));
   console.log(`done (${todo.length} requested, model ${model})`);

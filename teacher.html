@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>별구름 수집가 · 선생님 안내</title>
+<meta name="description" content="중학교 2학년 과학 게임 「별구름 수집가」의 교사용 안내: 사용된 천체, 교육과정 연계, 수업 활용" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#fbf7ee; --card:#ffffff; --ink:#1c2233; --soft:#56607a; --line:#e3dccb;
+  --navy:#0f1a36; --gold:#a8822f; --gold-soft:#f3e7c6; --accent:#27407e;
+  --serif:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+  --sans:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);word-break:keep-all;overflow-wrap:anywhere}
+a{color:var(--accent);text-underline-offset:.2em}
+header.top{position:relative;color:#fdf6e3;background:var(--navy);overflow:hidden}
+header.top img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:80% 55%;opacity:.55}
+header.top::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,14,32,.92) 0%,rgba(9,14,32,.55) 55%,rgba(9,14,32,.15) 100%)}
+header.top .in{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:56px 24px 48px}
+header.top .eyebrow{margin:0;font:700 14px/1 var(--sans);letter-spacing:.24em;color:#e8cf8f}
+header.top h1{margin:14px 0 10px;font:700 clamp(34px,6vw,56px)/1.15 var(--serif)}
+header.top p{margin:0;max-width:34em;font-size:17px;color:rgba(253,246,227,.92)}
+header.top .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+header.top .btns a{display:inline-flex;align-items:center;min-height:44px;padding:8px 20px;border-radius:999px;font-weight:700;text-decoration:none}
+header.top .play{background:#e8cf8f;color:#2a1c05}
+header.top .print{border:1px solid rgba(232,207,143,.7);color:#e8cf8f;background:none;font:inherit;font-weight:700;cursor:pointer;border-radius:999px;padding:8px 20px;min-height:44px}
+nav.toc{position:sticky;top:0;z-index:5;background:rgba(251,247,238,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+nav.toc ul{display:flex;gap:4px 18px;flex-wrap:wrap;list-style:none;margin:0 auto;padding:10px 24px;max-width:1040px;font-size:14px}
+nav.toc a{color:var(--soft);text-decoration:none;font-weight:700}
+nav.toc a:hover{color:var(--accent)}
+main{max-width:1040px;margin:0 auto;padding:8px 24px 56px}
+section{padding-top:44px}
+h2{margin:0 0 6px;font:700 28px/1.3 var(--serif);color:var(--navy)}
+h2 small{display:block;font:700 12px/1.6 var(--sans);letter-spacing:.2em;color:var(--gold)}
+h3{margin:26px 0 8px;font-size:18px;color:var(--navy)}
+p{margin:8px 0}
+.lead{color:var(--soft);margin-bottom:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px;padding:0;list-style:none}
+.facts li{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.facts b{display:block;font-size:12px;letter-spacing:.12em;color:var(--gold)}
+.box{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:16px 20px;margin:14px 0}
+.box.note{border-left-color:var(--accent);background:#f4f6fc}
+.box code{font:700 15px var(--sans);color:var(--gold)}
+ol.flow{counter-reset:s;list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+ol.flow li{counter-increment:s;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 14px 62px}
+ol.flow li::before{content:counter(s);position:absolute;left:16px;top:14px;width:32px;height:32px;border-radius:50%;background:var(--navy);color:#e8cf8f;font:700 16px/32px var(--serif);text-align:center}
+ol.flow b{color:var(--navy)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.55}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:var(--gold-soft);color:var(--navy);font-size:13px;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.pic{width:84px}
+td.pic img{display:block;width:72px;height:72px;object-fit:cover;border-radius:8px;background:#0b1428}
+td .cat{display:block;color:var(--soft);font-size:13px}
+td .src{font-size:12.5px;color:var(--soft)}
+tr.group th{background:var(--navy);color:#e8cf8f;font:700 15px var(--serif);letter-spacing:.04em}
+.tag{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.tag.emission{background:#fde3e1;color:#9c2b23}.tag.reflection{background:#dfeafc;color:#1f4a94}.tag.dark{background:#e6e3ea;color:#3b3050}
+.tag.open{background:#e2f3e6;color:#1f6a36}.tag.globular{background:#fbeccb;color:#7c5506}.tag.spiral{background:#e9e2f8;color:#4d2f93}
+ul.plain{padding-left:1.2em;margin:8px 0}
+ul.plain li{margin:4px 0}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.cols .box{margin:0}
+footer{border-top:1px solid var(--line);padding:22px 24px 34px;text-align:center;font-size:13px;color:var(--soft)}
+@media print{
+  nav.toc,header.top .btns{display:none}
+  header.top{color:#000;background:none}header.top img,header.top::after{display:none}
+  header.top .eyebrow{color:#555}header.top p{color:#222}
+  body{background:#fff;font-size:11.5pt}
+  section{padding-top:22px}.box,.facts li,ol.flow li,tr{break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="/art/landing-hero.jpg" alt="" />
+  <div class="in">
+    <p class="eyebrow">선생님 안내</p>
+    <h1>별구름 수집가</h1>
+    <p>밤마다 망원경으로 은하수를 살펴 빛나는 구름과 별 무리를 찾고, 생김새로 묶어 도감에 담는 중학교 2학년 과학 게임입니다. 이 쪽에는 게임에 쓰인 천체와 수업에 쓸 내용을 간단히 정리했습니다.</p>
+    <div class="btns">
+      <a class="play" href="index.html">게임 열기</a>
+      <button class="print" type="button" onclick="window.print()">인쇄하기</button>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="차례">
+  <ul>
+    <li><a href="#overview">한눈에</a></li>
+    <li><a href="#curriculum">교육과정</a></li>
+    <li><a href="#flow">게임 흐름</a></li>
+    <li><a href="#objects">사용된 천체</a></li>
+    <li><a href="#classify">분류 기준</a></li>
+    <li><a href="#score">점수</a></li>
+    <li><a href="#lesson">수업 활용</a></li>
+    <li><a href="#caution">유의점</a></li>
+    <li><a href="#credits">사진 출처</a></li>
+  </ul>
+</nav>
+
+<main>
+<section id="overview">
+  <h2><small>OVERVIEW</small>한눈에 보기</h2>
+  <ul class="facts">
+    <li><b>대상</b>중학교 2학년 과학<br />「우리은하를 이루는 천체」</li>
+    <li><b>쓰는 때</b>성운과 성단을 배운 뒤 정리·적용 활동, 또는 배우기 전 탐색 활동</li>
+    <li><b>기기</b>태블릿·스마트폰 가로 화면(터치), PC 브라우저도 가능</li>
+    <li><b>준비</b>설치·로그인 없음. 주소만 열면 됩니다</li>
+    <li><b>천체</b><span id="fact-count">필수 카드 20장 + 보너스 11장</span><br />모두 실제 천문 관측 사진</li>
+    <li><b>진행 저장</b>그 기기의 브라우저에만 저장(서버로 보내지 않음)</li>
+  </ul>
+  <div class="box">
+    <b>이 게임이 노리는 것.</b> 학생이 용어를 먼저 외우지 않고, 사진의 <b>생김새를 보고 스스로 기준을 세워 나눈 뒤</b> 그 묶음에 이름(성운·성단, 다섯 종류)을 붙이게 합니다. 그래서 카드를 모으는 동안에는 화면 어디에도 “성운”, “성단”이라는 말이 나오지 않고, 1차 묶기를 통과한 뒤에야 이름이 공개됩니다.
+  </div>
+</section>
+
+<section id="curriculum">
+  <h2><small>CURRICULUM</small>교육과정 연계</h2>
+  <div class="box">
+    <p><code>[9과15-02]</code> 우리은하의 구조와 크기를 이해하고, 성운과 성단의 특징을 비교할 수 있다. <span style="color:var(--soft)">(2022 개정 교육과정 중학교 과학)</span></p>
+  </div>
+  <h3>학습 목표</h3>
+  <ul class="plain">
+    <li>관측 사진의 겉모습을 보고 성운(구름 같은 것)과 성단(별 무리)을 구분할 수 있다.</li>
+    <li>성운을 방출 성운·반사 성운·암흑 성운으로, 성단을 산개 성단·구상 성단으로 나누고 특징을 비교할 수 있다.</li>
+    <li>같은 별자리 방향에 보이는 천체라도 지구에서의 거리는 서로 다르다는 것을 말할 수 있다.</li>
+    <li>(보너스) 우리은하 안의 천체와 우리은하 밖의 은하를 구별할 수 있다.</li>
+  </ul>
+  <p class="lead">게임은 “성운과 성단의 특징 비교”에 초점을 둡니다. 우리은하의 모양·크기·태양계의 위치는 다루지 않으므로 수업에서 따로 다루어 주세요.</p>
+</section>
+
+<section id="flow">
+  <h2><small>HOW IT PLAYS</small>게임 흐름</h2>
+  <ol class="flow">
+    <li><b>시작 브리핑.</b> 본부 요원이 할 일을 알려 줍니다. 새 판에서 한 번만 나옵니다.</li>
+    <li><b>밤마다 임무 받기.</b> 하늘 지도에 “첫째 밤 임무”가 나옵니다. 어느 별자리에서 천체를 몇 개(최대 3개) 찾을지입니다. 처음에는 교과서의 네 별자리(황소·오리온·궁수·전갈자리)만 열려 있고, 카드를 <span data-v="unlock">8</span>장 모으면 나머지가 열립니다. <span data-v="picture">10</span>장 전까지는 찾을 천체의 흐린 사진이, 그 뒤로는 “별이 공처럼 빽빽하게 뭉친 것”처럼 쉬운 말이 단서입니다.</li>
+    <li><b>길잡이 별 따라 훑기.</b> 구역 하늘을 손가락으로 천천히 끌어 훑습니다. “베텔게우스에서 아래로 조금 가 보세요”처럼 밝은 별을 기준으로 한 단서가 나옵니다. 너무 빨리 움직이면 천체가 보이지 않습니다. 흐린 얼룩이 시야 가운데에 오면 「확대」를 누릅니다.</li>
+    <li><b>촬영하기.</b> 확대 화면에서는 초점 눈금이 <b>혼자 좌우로 오갑니다.</b> 사진이 가장 또렷해지는 순간에 「촬영」을 누릅니다. 초점이 잘 맞으면 별 3개, 조금 흐리면 2개, 흐리면 1개이고, 너무 어긋나면 “다시 촬영해 보아요.”가 나오고 다시 시도합니다(횟수 제한과 감점 없음).</li>
+    <li><b>밤과 낮.</b> 임무마다 밤 시간이 있습니다(<span data-v="nightBase">20</span>초 + 찾을 천체 하나에 <span data-v="nightPer">50</span>초). 시간이 다 되면 하늘이 해돋이 빛 → 낮 → 해넘이 빛으로 바뀌는 동안 몇 초 기다렸다가 같은 자리에서 이어 찾습니다. 잃는 것은 없고, 동트기 전에 임무를 마치면 보너스 점수를 받습니다.</li>
+    <li><b>1차 묶기: 구름 같은 것 / 별 무리.</b> 20장을 모으면 사진만 보고 두 묶음으로 나눕니다. 통과하면 “구름 같은 것은 성운, 별 무리는 성단”이라고 이름을 알려 줍니다.</li>
+    <li><b>2차 묶기.</b> 성운 12장을 「밝은 것 / 어두운 것」으로, 성단 8장을 「엉성하게 모인 것 / 빽빽하게 모인 것」으로 나눕니다.</li>
+    <li><b>도감 등록.</b> 카드마다 이름, 종류와 교과서 설명 한 줄, 별자리, 지구에서의 거리(광년)가 공개됩니다. 방출 성운과 반사 성운은 여기서 구분됩니다. 이어서 천체끼리 거리 차이가 큰 별자리를 골라, 같은 별자리의 천체를 가까운 것부터 나란히 보여 줍니다.</li>
+    <li><b>결과와 보너스 관측.</b> 점수와 등급이 나옵니다. 「보너스 관측」에서는 필수 카드에 없던 성운·성단과 우리은하 밖의 은하 3개를 용어로 된 의뢰(“구상 성단을 하나 더 찾아 주세요.”)로 찾습니다. 보너스는 점수에 들어가지 않습니다.</li>
+  </ol>
+  <h3>틀렸을 때 주는 도움(묶기)</h3>
+  <div class="wrap"><table>
+    <thead><tr><th>틀린 판정</th><th>요원의 말과 표시</th><th>묶기 점수</th></tr></thead>
+    <tbody>
+      <tr><td>1번째</td><td>“카드 N장이 어울리지 않는 묶음에 있어요. 다시 살펴보세요.” 어느 카드인지는 알려 주지 않습니다.</td><td class="num">× <span data-v="mult1">0.7</span></td></tr>
+      <tr><td>2번째</td><td>어긋난 카드 가운데 최대 <span data-v="highlight">3</span>장에 노란 테두리. “이 카드는 다른 묶음과 더 닮았어요.”</td><td class="num">× <span data-v="mult2">0.4</span></td></tr>
+      <tr><td>3번째부터</td><td>노란 테두리와 함께 기준을 말해 줍니다. 예: “색 말고 밝은지 어두운지로 나눠 보세요.”</td><td class="num">× <span data-v="mult3">0.2</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="objects">
+  <h2><small>OBJECTS</small>사용된 천체</h2>
+  <p class="lead">필수 카드는 다섯 종류가 4장씩 20장입니다. 거리는 어림값(광년)이고, 자료에 따라 조금씩 다릅니다. 표는 게임 자료에서 바로 만들어지므로 게임과 항상 같습니다.</p>
+  <div class="wrap"><table id="object-table">
+    <thead><tr><th>사진</th><th>이름 (목록 번호)</th><th>종류</th><th>별자리</th><th>거리(광년)</th><th>사진 출처</th></tr></thead>
+    <tbody><tr><td colspan="6">표를 불러오는 중입니다. 자바스크립트가 꺼져 있으면 보이지 않습니다.</td></tr></tbody>
+  </table></div>
+</section>
+
+<section id="classify">
+  <h2><small>CLASSIFY</small>분류 기준: 겉모습에서 용어로</h2>
+  <p class="lead">학생이 게임에서 쓰는 쉬운 말과 교과서 용어의 대응입니다.</p>
+  <div class="wrap"><table id="type-table">
+    <thead><tr><th>게임 속 묶음 이름</th><th>교과서 용어</th><th>교과서 설명</th><th>필수 카드</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <div class="box note">
+    <b>방출 성운과 반사 성운.</b> 묶기에서는 둘을 함께 “밝은 것”으로 둡니다. 사진의 색(붉은색·푸른색)만으로 나누게 하면 색 외우기가 되기 쉬워서, 구분은 도감 등록에서 “스스로 빛을 낸다 / 별빛을 반사한다”는 설명으로 알려 줍니다. 색과 원리를 연결하는 이야기는 수업에서 덧붙여 주세요.
+  </div>
+</section>
+
+<section id="score">
+  <h2><small>SCORE</small>점수와 등급</h2>
+  <div class="wrap"><table id="score-table">
+    <thead><tr><th>항목</th><th>점수</th><th>설명</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+  <p id="rank-line" class="lead"></p>
+  <p>점수의 절반 가까이가 묶기에서 나옵니다. 찍어서 통과하면 묶기 점수가 크게 줄어, 수집을 아무리 잘해도 가장 높은 등급이 되지 않게 맞추어 두었습니다.</p>
+</section>
+
+<section id="lesson">
+  <h2><small>IN CLASS</small>수업 활용</h2>
+  <div class="cols">
+    <div class="box">
+      <h3 style="margin-top:0">정리·적용 활동으로 (권장)</h3>
+      <ul class="plain">
+        <li><b>도입.</b> 교과서의 성운·성단 사진을 다시 보고 오늘 할 일을 안내합니다.</li>
+        <li><b>전개.</b> 개인 또는 짝 활동으로 게임을 합니다. 묶기 단계에서 “왜 이 묶음에 넣었는지”를 짝에게 말하게 합니다.</li>
+        <li><b>정리.</b> 도감의 「별자리별로 보기」 화면을 함께 보며 거리를 비교하고, 아래 발문으로 마무리합니다.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3 style="margin-top:0">탐색 활동으로</h3>
+      <ul class="plain">
+        <li>용어를 배우기 전에 1차 묶기까지만 하게 하고, 학생이 세운 기준을 칠판에 모읍니다.</li>
+        <li>“구름 같은 것 / 별 무리”라는 학생의 말에서 성운·성단이라는 용어를 꺼냅니다.</li>
+        <li>다음 시간에 이어서 2차 묶기와 도감 등록을 합니다(진행은 기기에 저장됩니다).</li>
+      </ul>
+    </div>
+  </div>
+  <h3>발문 예시</h3>
+  <ul class="plain">
+    <li>암흑 성운 사진에도 별이 많이 보이는데, 왜 “별 무리”가 아니라 “구름 같은 것”에 넣었나요?</li>
+    <li>암흑 성운은 왜 검게 보일까요? 그 자리에 아무것도 없어서일까요?</li>
+    <li>산개 성단과 구상 성단은 별의 수와 모인 모양이 어떻게 다른가요? 사진에서 근거를 찾아 말해 봅시다.</li>
+    <li>방출 성운과 반사 성운은 모두 밝게 보입니다. 빛을 내는 방법은 어떻게 다른가요?</li>
+    <li>오리온자리의 천체들은 지구에서 거의 같은 거리에 있는데, 궁수자리의 천체들은 거리가 많이 다릅니다. “같은 별자리에 있다”는 말은 무엇을 뜻할까요?</li>
+    <li>(보너스) 소용돌이 은하까지의 거리는 구상 성단 M13까지의 거리의 약 몇 배인가요? 이 은하는 우리은하 안에 있나요?</li>
+  </ul>
+  <h3>확인할 수 있는 것</h3>
+  <ul class="plain">
+    <li>결과 화면의 「힌트 단계 · 틀린 판정 횟수」로 어느 분류에서 어려워했는지 볼 수 있습니다(1차, 성운, 성단 따로).</li>
+    <li>촬영 별점과 동트기 전 완료는 조작 솜씨에 가깝습니다. 개념 이해를 볼 때는 묶기 기록을 보세요.</li>
+  </ul>
+</section>
+
+<section id="caution">
+  <h2><small>NOTES</small>지도할 때 유의할 점</h2>
+  <ul class="plain">
+    <li><b>사진은 눈으로 본 모습이 아닙니다.</b> 큰 망원경으로 오래 빛을 모아 찍고 색을 입힌 사진입니다. 게임의 망원경 화면처럼 훑어서 바로 이렇게 보이지는 않는다고 알려 주세요.</li>
+    <li><b>크기와 밝기는 서로 비교할 수 없습니다.</b> 카드마다 찍은 범위와 확대 정도가 다릅니다.</li>
+    <li><b>하늘 지도와 구역 배치는 실제 하늘을 따르되 단순하게 줄였습니다.</b> 천체와 밝은 별의 자리는 실제 적경·적위에서 계산했지만, 가까운 천체끼리는 화면에서 겹치지 않게 조금 벌렸습니다. 별자리 선은 알아보기 쉽게 그린 것입니다.</li>
+    <li><b>「삼태성」.</b> 오리온자리 허리의 세 별을 게임에서는 흔히 쓰는 대로 삼태성이라고 부릅니다. 전통 별자리에서 삼태성은 큰곰자리의 별을 가리키므로 필요하면 덧붙여 설명해 주세요.</li>
+    <li><b>낯선 길잡이 이름.</b> 몇몇 구역은 이름 있는 밝은 별이 적어 “뱀자리 에타별”처럼 그리스 문자가 붙은 이름이나 이웃 별자리의 별이 길잡이로 나옵니다.</li>
+    <li><b>파이프 성운</b>은 여러 암흑 성운이 이어진 것이고, <b>이중 성단</b>은 산개 성단 두 개(NGC 869, NGC 884)가 나란히 있는 것입니다.</li>
+    <li><b>남쪽 하늘의 천체.</b> 오메가 센타우리, 용골 성운, 큰부리새자리 47 등은 우리나라에서 보이지 않거나 거의 보이지 않습니다.</li>
+    <li><b>밤과 낮은 놀이 장치입니다.</b> 한 임무에 한두 분인 “밤”은 실제 시간과 관계가 없습니다. 낮에 관측하지 못하는 까닭(햇빛에 하늘이 밝아져 어두운 천체가 묻힌다)만 짚어 주세요.</li>
+    <li><b>저장.</b> 진행 상황은 그 기기 그 브라우저에만 남습니다. 다른 기기에서는 이어지지 않고, 사이트 데이터를 지우면 사라집니다. 결과 화면의 「처음부터 다시」를 두 번 누르면 새 판이 됩니다. 낮 화면에서 새로 고침하면 기다림이 끝난 다음 밤으로 넘어갑니다.</li>
+  </ul>
+</section>
+
+<section id="credits">
+  <h2><small>CREDITS</small>사진과 그림의 출처</h2>
+  <p>천체 사진은 모두 실제 관측 사진이며 <span id="agency-line">ESO, NOIRLab, ESA/Hubble</span>에서 가져왔습니다. 라이선스는 CC BY 4.0이고, 화면에 맞게 크기를 줄이고 잘라 썼습니다. 사진마다의 크레딧은 위 표와 게임 안의 「사진 출처」 화면에 있습니다.</p>
+  <p>배경, 요원, 단추, 첫 화면 그림 같은 게임 그림은 이미지 생성 AI로 만들었습니다. 관측 사진에는 AI로 만든 이미지를 쓰지 않았습니다.</p>
+</section>
+</main>
+
+<footer>© 2026 Designed &amp; Developed by 두리쌤(@trdoolee). All rights reserved.</footer>
+<script type="module" src="/src/teacher.js"></script>
+</body>
+</html>
