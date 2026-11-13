@@ -37,7 +37,8 @@ export async function enterFullscreenLandscape(doc = document, scr = globalThis.
   return true;
 }
 
-export function initLanding(doc = document, win = window) {
+// onStart: 시작 단추를 누른 그 순간(누르기 안)에 부른다. 소리처럼 누르기 안에서만 시작할 수 있는 것을 여기서 켠다.
+export function initLanding({ onStart = () => {}, doc = document, win = window } = {}) {
   const el = doc.getElementById('landing');
   const btn = doc.getElementById('landing-start');
   if (!el || !btn) return;
@@ -55,6 +56,7 @@ export function initLanding(doc = document, win = window) {
   }
   btn.addEventListener('click', () => {
     enterFullscreenLandscape(doc, win.screen);
+    onStart();
     el.classList.add('gone');
     el.setAttribute('aria-hidden', 'true');
     btn.blur();

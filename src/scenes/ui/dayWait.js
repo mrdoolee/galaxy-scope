@@ -14,7 +14,7 @@ const SKIES = {
   sunset: [0x1d1b4f, 0x7a3a7c, 0xe2603f, 0xf8a544],
 };
 const GLOW = { sunrise: 0xfff3c4, day: 0xffffff, sunset: 0xffc27a };
-const HILL = 0x0a1024;     // 아래쪽 언덕 그림자(관측소가 선 땅)
+const HILL = 0x0a1024;     // 아래쪽 낮은 언덕 그림자(지평선)
 const BANDS = 72;
 const CARD_H = 120;
 const MAX_CARDS = 3;       // 시야 아래쪽 폭에 들어가는 만큼(더 찍었으면 마지막 셋, 장 수는 글로)
@@ -59,9 +59,6 @@ export function runDayWait(scene, { cardIds, onDone, hole, fade = [], below = nu
   hill.fillStyle(HILL, 1);
   hill.fillEllipse(x - r * 0.35, y + r * 1.12, r * 2.2, r * 0.62);
   hill.fillEllipse(x + r * 0.6, y + r * 1.16, r * 1.8, r * 0.56);
-  // 언덕 위 작은 관측소 그림자(둥근 지붕과 몸통)
-  hill.fillCircle(x - r * 0.42, y + r * 0.74, r * 0.085);
-  hill.fillRect(x - r * 0.505, y + r * 0.74, r * 0.17, r * 0.12);
   const inHole = [layers.sunrise, layers.day, layers.sunset, hill];
   for (const o of inHole) {
     o.setAlpha(0);

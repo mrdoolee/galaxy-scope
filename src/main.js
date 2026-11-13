@@ -9,6 +9,8 @@ import RegistryScene from './scenes/RegistryScene.js';
 import ResultScene from './scenes/ResultScene.js';
 import CreditsScene from './scenes/CreditsScene.js';
 import { initLanding } from './landing.js';
+import { createBgm } from './audio/bgm.js';
+import { initBgmButton } from './audio/bgmButton.js';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -27,7 +29,25 @@ const game = new Phaser.Game({
   scene: [BootScene, SkyMapScene, ScanScene, SortScene, RegistryScene, ResultScene, CreditsScene],
 });
 
-initLanding();
+// 배경 음악: 랜딩의 시작 단추를 누를 때 켜지고, 장면에 따라 곡이 바뀐다. 오른쪽 위 단추로 켜고 끈다.
+let bgmStorage = null;
+try {
+  bgmStorage = window.localStorage;
+} catch {
+  bgmStorage = null;
+}
+const bgm = createBgm({ storage: bgmStorage, base: import.meta.env.BASE_URL });
+const bgmButton = initBgmButton({ bgm, onLayout: () => game.scale?.refresh() });
+game.events.once('ready', () => {
+  for (const scene of game.scene.scenes) scene.events.on('create', () => bgm.setScene(scene.scene.key));
+});
+document.addEventListener('visibilitychange', () => bgm.setHidden(document.hidden));
+initLanding({
+  onStart: () => {
+    bgm.start();
+    bgmButton.show();
+  },
+});
 
 // 세로 화면이면 덮개를 보이고 게임을 멈춘다. 상태가 바뀔 때만 멈추거나 다시 움직인다.
 // force: 탭이 다시 보이게 되면 지금 방향을 다시 적용한다(세로인 채로 돌아오면 계속 멈춰 있게).
@@ -50,4 +70,7 @@ game.events.on('visible', () => applyOrientation(true));
 applyOrientation(true);
 
 // 개발 중에만: 브라우저 자동 점검이 장면 상태를 읽을 수 있게 한다(배포본에는 들어가지 않는다).
-if (import.meta.env.DEV) window.__GA = game;
+if (import.meta.env.DEV) {
+  window.__GA = game;
+  window.__BGM = bgm;
+}
