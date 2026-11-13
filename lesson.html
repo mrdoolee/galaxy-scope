@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>별구름 수집가 · 수업 슬라이드</title>
+<meta name="description" content="「별구름 수집가」를 한 뒤 교과서 「우리은하를 이루는 천체」(282~285쪽)로 정리하는 수업용 슬라이드" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --night:#080d1f; --navy:#101a38; --panel:#16224a; --line:rgba(232,207,143,.28);
+  --cream:#fdf6e3; --soft:#b9c1da; --gold:#e8cf8f; --gold-deep:#c9a652;
+  --emission:#ff9a8f; --reflection:#9cc2ff; --dark:#c3b4dc; --open:#93dca8; --globular:#f4cf7c;
+  --serif:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+  --sans:"Noto Sans KR","Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#03050d;color:var(--cream);font-family:var(--sans);overflow:hidden;word-break:keep-all}
+button{font:inherit;color:inherit}
+
+/* 무대: 1280×720으로 짜고 화면에 맞게 통째로 늘이거나 줄인다. */
+#deck{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform:translate(-50%,-50%) scale(var(--s,1));transform-origin:center;overflow:hidden;cursor:pointer;user-select:none;
+  background:radial-gradient(900px 520px at 88% -12%,#22346b 0%,transparent 62%),radial-gradient(700px 420px at -8% 108%,#1a2450 0%,transparent 60%),var(--night)}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;padding:50px 72px 62px}
+.slide.on{display:flex}
+
+.eyebrow{margin:0;font-size:17px;font-weight:700;letter-spacing:.22em;color:var(--gold)}
+h1,h2{margin:0;font-family:var(--serif);font-weight:700;color:var(--cream)}
+h2{margin-top:10px;font-size:50px;line-height:1.2}
+h2 em{font-style:normal;color:var(--gold)}
+p{margin:0}
+.page{position:absolute;right:72px;bottom:22px;font-size:15px;color:var(--soft);letter-spacing:.06em}
+.body{flex:1;min-height:0;display:flex;margin-top:26px}
+
+/* 가려 둔 단계: 자리는 그대로 두고 보이지 않게만 한다. */
+[data-step]{opacity:0;transform:translateY(10px);transition:opacity .35s ease,transform .35s ease}
+[data-step].shown{opacity:1;transform:none}
+.blank{display:inline-block;min-width:3.4em;padding:0 .3em;border-bottom:3px dashed var(--gold-deep);text-align:center;color:transparent;opacity:1;transform:none;transition:color .3s ease,border-color .3s ease}
+.blank.shown{color:var(--gold);border-bottom-color:transparent}
+
+/* 사진 */
+figure{margin:0;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#000}
+figure img{display:block;width:100%;height:100%;object-fit:cover}
+figcaption{position:absolute;left:0;right:0;bottom:0;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 12px;padding:26px 14px 9px;background:linear-gradient(transparent,rgba(3,5,13,.88))}
+figcaption b{font-size:21px;font-weight:700;white-space:nowrap}
+figcaption span{font-size:11.5px;color:rgba(253,246,227,.72);margin-left:auto;white-space:nowrap}
+figure.mini figcaption{padding:14px 8px 5px}
+figure.mini figcaption span{font-size:9.5px}
+
+.chip{display:inline-block;padding:4px 16px;border-radius:999px;border:1px solid var(--line);font-size:20px;font-weight:700;color:var(--gold);background:rgba(232,207,143,.08)}
+.note{border-left:4px solid var(--gold-deep);background:rgba(22,34,74,.82);border-radius:0 12px 12px 0;padding:14px 22px;font-size:24px;line-height:1.5}
+.note b{color:var(--gold)}
+.key{color:var(--gold);font-weight:700}
+.t-emission{color:var(--emission)}.t-reflection{color:var(--reflection)}.t-dark{color:var(--dark)}.t-open{color:var(--open)}.t-globular{color:var(--globular)}
+
+/* 1 표지 */
+.cover{padding:0}
+.cover .hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:70% 50%}
+.cover::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,10,26,.94) 0%,rgba(6,10,26,.74) 42%,rgba(6,10,26,.08) 78%)}
+.cover .in{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;padding:76px 72px 56px}
+.cover h1{margin-top:22px;font-size:92px;line-height:1.12}
+.cover .sub{margin-top:20px;font-size:28px;color:var(--gold)}
+.cover .goal{margin-top:auto;max-width:640px}
+.cover .goal small{display:block;font-size:16px;font-weight:700;letter-spacing:.2em;color:var(--gold);margin-bottom:8px}
+.cover .goal p{font:700 32px/1.4 var(--serif)}
+.cover .foot{margin-top:22px;font-size:17px;color:var(--soft)}
+
+/* 2 돌아보기 */
+.recall .cards{display:grid;grid-template-columns:repeat(3,160px);grid-template-rows:repeat(2,160px);gap:14px;align-content:center}
+.recall .tree{flex:1;margin-left:54px;display:flex;flex-direction:column;justify-content:center;gap:20px}
+.branch{display:grid;grid-template-columns:230px 44px 1fr;align-items:center}
+.branch .root{font:700 34px/1.2 var(--serif);padding:22px 0;text-align:center;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+.branch .arrow{text-align:center;font-size:28px;color:var(--gold-deep)}
+.branch .leaves{display:grid;gap:10px}
+.branch .leaf{font-size:27px;font-weight:500;padding:11px 22px;border-radius:12px;background:rgba(253,246,227,.07);border:1px solid rgba(253,246,227,.16)}
+.branch .rule{grid-column:1 / -1;margin-top:10px;font-size:23px;color:var(--soft)}
+.branch .rule b{color:var(--gold);font-size:26px}
+
+/* 3 이름 붙이기 */
+.naming .body{flex-direction:column;gap:20px}
+.naming .pair{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.naming .item{display:grid;grid-template-columns:250px 1fr;gap:24px;align-items:center;padding:18px;border-radius:18px;background:rgba(22,34,74,.7);border:1px solid var(--line)}
+.naming figure{height:100%}
+.naming .from{font-size:22px;color:var(--soft)}
+.naming .term{margin:6px 0 14px;font:700 68px/1.1 var(--serif)}
+.naming .def{font-size:26px;line-height:1.5}
+
+/* 4 밝은 성운 */
+.bright .body{gap:32px}
+.bright .col{flex:1;display:flex;flex-direction:column;min-width:0}
+.bright figure{height:268px}
+.bright .term{margin-top:16px;font:700 42px/1.2 var(--serif)}
+.bright .def{margin-top:8px;font-size:25px;line-height:1.5}
+.bright .hue{margin-top:10px;font-size:20px;color:var(--soft)}
+
+/* 5 암흑 성운 */
+.darkneb .body{gap:44px}
+.darkneb .big{width:452px;flex:none}
+.darkneb .side{flex:1;display:flex;flex-direction:column;gap:18px;justify-content:center}
+.darkneb .ask{font-size:30px;line-height:1.5}
+.darkneb .term{font:700 54px/1.15 var(--serif);color:var(--dark)}
+.darkneb .def{margin-top:8px;font-size:27px;line-height:1.5}
+.darkneb .more{display:grid;grid-template-columns:190px 1fr;gap:20px;align-items:center}
+.darkneb .more figure{height:150px}
+.darkneb .more p{font-size:23px;line-height:1.5;color:var(--soft)}
+
+/* 6 성단 */
+.clusters .grid{flex:1;display:grid;grid-template-columns:150px 1fr 1fr;grid-template-rows:206px auto;gap:0 26px}
+.clusters figure{height:206px}
+.clusters .head{font:700 40px/1.2 var(--serif);padding:14px 0 8px}
+.clusters .lab{align-self:center;font-size:20px;font-weight:700;color:var(--gold);letter-spacing:.04em}
+.clusters .cell{font-size:25px;line-height:1.4;padding:11px 0;border-top:1px solid rgba(253,246,227,.16)}
+.clusters .lab.row{padding:11px 0;border-top:1px solid rgba(253,246,227,.16);align-self:stretch;display:flex;align-items:center}
+
+/* 7 거리 */
+.distance .body{flex-direction:column;gap:14px}
+.distance .lead{font-size:24px;color:var(--soft)}
+.rows{display:grid;gap:9px}
+.row{display:grid;grid-template-columns:74px 196px 1fr;gap:18px;align-items:center}
+.row figure{width:74px;height:62px;border-radius:9px}
+.row figure figcaption{display:none}
+.row .who b{display:block;font-size:24px}
+.row .who small{font-size:16px;color:var(--soft)}
+.row .track{position:relative;height:30px}
+.row .fill{position:absolute;left:0;top:5px;height:20px;border-radius:0 5px 5px 0;background:linear-gradient(90deg,rgba(232,207,143,.35),var(--gold))}
+.row .val{position:absolute;top:0;line-height:30px;font-size:22px;font-weight:700;padding-left:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.axis{display:grid;grid-template-columns:74px 196px 1fr;gap:18px;font-size:15px;color:var(--soft)}
+.axis div{grid-column:3;position:relative;height:26px;border-top:1px solid rgba(253,246,227,.25);width:74%}
+.axis span{position:absolute;top:5px;white-space:nowrap}
+.axis span:nth-child(1){left:0}
+.axis span:nth-child(2){left:50%;transform:translateX(-50%)}
+.axis span:nth-child(3){right:0}
+
+/* 8 정리 */
+.summary .body{flex-direction:column;gap:12px}
+.groups{display:grid;grid-template-columns:3fr 2fr;gap:22px}
+.group h3{margin:0;display:flex;align-items:baseline;gap:14px;padding:10px 18px;border-radius:12px 12px 0 0;background:var(--panel);border:1px solid var(--line);border-bottom:0;font:700 34px/1.2 var(--serif)}
+.group h3 small{font:400 18px/1.3 var(--sans);color:var(--soft)}
+.group .kinds{display:grid;gap:12px;padding:14px;border:1px solid var(--line);border-radius:0 0 12px 12px;background:rgba(22,34,74,.45)}
+.group.neb .kinds{grid-template-columns:repeat(3,1fr)}
+.group.clu .kinds{grid-template-columns:repeat(2,1fr)}
+.kind figure{height:226px}
+.kind .name{margin-top:12px;font:700 30px/1.3 var(--serif);white-space:nowrap}
+.kind .name .blank{min-width:2.6em}
+.kind .line{margin-top:4px;font-size:20px;line-height:1.4;color:var(--soft)}
+.summary .basis{margin-top:6px;font-size:23px;color:var(--soft)}
+.summary .basis b{color:var(--gold)}
+
+/* 9 탐구 */
+.model .body{flex-direction:column;gap:22px}
+.model .two{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.model .box{padding:26px 30px 28px;border-radius:16px;background:rgba(22,34,74,.72);border:1px solid var(--line)}
+.model .box h3{margin:0 0 4px;font:700 38px/1.3 var(--serif);color:var(--gold)}
+.model .need{font-size:21px;color:var(--soft);margin-bottom:16px}
+.model ol{margin:0;padding:0;list-style:none;counter-reset:n;display:grid;gap:14px}
+.model li{counter-increment:n;position:relative;padding-left:50px;font-size:27px;line-height:1.45}
+.model li::before{content:counter(n);position:absolute;left:0;top:4px;width:32px;height:32px;border-radius:50%;background:var(--gold);color:#221803;font:700 19px/32px var(--sans);text-align:center}
+.model .safe{margin-top:18px;font-size:22px;font-weight:700;color:#ffb199}
+.model .think{font-size:26px;line-height:1.6;padding:18px 26px}
+
+/* 10 확인 */
+.check .body{gap:36px}
+.check .qs{flex:1;display:flex;flex-direction:column;gap:12px}
+.check .q{padding:12px 22px 14px;border-radius:14px;background:rgba(22,34,74,.72);border:1px solid var(--line);font-size:25px;line-height:1.55}
+.check .q small{display:block;font-size:15px;font-weight:700;letter-spacing:.16em;color:var(--gold);margin-bottom:2px}
+.check .ans{margin-top:8px;color:var(--gold);font-weight:700}
+.check .pic{width:330px;flex:none}
+.check .pic figure{height:330px}
+.check .credits{position:absolute;left:72px;right:220px;bottom:18px;font-size:11px;line-height:1.5;color:rgba(185,193,218,.85)}
+
+/* 조작 줄 */
+#bar{position:fixed;left:0;top:0;height:3px;background:var(--gold);transition:width .3s ease;z-index:5}
+#ctrl{position:fixed;right:14px;top:12px;display:flex;align-items:center;gap:6px;z-index:5;opacity:.5;transition:opacity .2s ease}
+#ctrl:hover,#ctrl:focus-within{opacity:1}
+#ctrl button{min-width:38px;height:34px;padding:0 10px;border-radius:9px;border:1px solid rgba(232,207,143,.4);background:rgba(8,13,31,.75);font-size:15px;cursor:pointer}
+#ctrl button:disabled{opacity:.35;cursor:default}
+#ctrl button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#counter{min-width:58px;text-align:center;font-size:14px;color:var(--soft);font-variant-numeric:tabular-nums}
+
+@media (prefers-reduced-motion:reduce){[data-step],.blank,#bar{transition:none}}
+
+/* 인쇄: 한 쪽에 슬라이드 한 장, 가려 둔 것은 모두 보이게. */
+@page{size:1280px 720px;margin:0}
+@media print{
+  html,body{height:auto;overflow:visible;background:#fff}
+  #bar,#ctrl{display:none}
+  #deck{position:static;transform:none;width:auto;height:auto;overflow:visible;background:none}
+  .slide{position:relative;display:flex;width:1280px;height:720px;break-after:page;background:var(--night);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  [data-step]{opacity:1;transform:none}
+  .blank{color:var(--gold);border-bottom-color:transparent}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<main id="deck">
+
+<!-- 1. 표지 -->
+<section class="slide cover on" aria-label="표지">
+  <img class="hero" src="/art/landing-hero.jpg" alt="" />
+  <div class="in">
+    <p class="eyebrow">중학교 과학 2 · Ⅷ. 별과 우주</p>
+    <h1>우리은하를<br />이루는 천체</h1>
+    <p class="sub">별구름 수집가, 오늘은 도감을 정리하는 날</p>
+    <div class="goal">
+      <small>이 시간을 마치면</small>
+      <p>성운과 성단의 종류와 특징을 설명할 수 있다.</p>
+    </div>
+    <p class="foot">교과서 282~285쪽</p>
+  </div>
+</section>
+
+<!-- 2. 게임 돌아보기 -->
+<section class="slide recall" aria-label="게임 돌아보기">
+  <p class="eyebrow">돌아보기</p>
+  <h2>카드 20장, <em>어떻게</em> 묶었나요?</h2>
+  <div class="body">
+    <div class="cards">
+      <figure class="mini" data-obj="m17" data-name="off"></figure>
+      <figure class="mini" data-obj="m45" data-name="off"></figure>
+      <figure class="mini" data-obj="b33" data-name="off"></figure>
+      <figure class="mini" data-obj="m13" data-name="off"></figure>
+      <figure class="mini" data-obj="ngc7023" data-name="off"></figure>
+      <figure class="mini" data-obj="m7" data-name="off"></figure>
+    </div>
+    <div class="tree">
+      <div class="branch" data-step="1">
+        <div class="root">구름 같은 것</div><div class="arrow">→</div>
+        <div class="leaves"><div class="leaf">밝은 것</div><div class="leaf">어두운 것</div></div>
+        <p class="rule" data-step="3">나눈 기준 <b>구름의 밝기</b></p>
+      </div>
+      <div class="branch" data-step="2">
+        <div class="root">별 무리</div><div class="arrow">→</div>
+        <div class="leaves"><div class="leaf">엉성하게 모인 것</div><div class="leaf">빽빽하게 모인 것</div></div>
+        <p class="rule" data-step="3">나눈 기준 <b>별이 모여 있는 정도</b></p>
+      </div>
+    </div>
+  </div>
+  <p class="page">교과서 283쪽 「정리해 볼까」</p>
+</section>
+
+<!-- 3. 성운과 성단 -->
+<section class="slide naming" aria-label="성운과 성단">
+  <p class="eyebrow">우리은하는 어떤 천체로 이루어져 있을까?</p>
+  <h2>묶음에 <em>이름</em>을 붙이면</h2>
+  <div class="body">
+    <div class="pair">
+      <div class="item">
+        <figure data-obj="m42"></figure>
+        <div>
+          <p class="from">구름 같은 것</p>
+          <p class="term"><span class="blank" data-step="1">성운</span></p>
+          <p class="def"><span class="key">성간 물질</span>이 모여 구름처럼 보이는 천체</p>
+        </div>
+      </div>
+      <div class="item">
+        <figure data-obj="m45"></figure>
+        <div>
+          <p class="from">별 무리</p>
+          <p class="term"><span class="blank" data-step="2">성단</span></p>
+          <p class="def">수많은 별이 <span class="key">무리</span>를 이루고 있는 천체</p>
+        </div>
+      </div>
+    </div>
+    <p class="note" data-step="3"><b>성간 물질</b> 별과 별 사이에 존재하는 가스와 티끌 등의 물질</p>
+  </div>
+  <p class="page">교과서 282쪽</p>
+</section>
+
+<!-- 4. 방출 성운과 반사 성운 -->
+<section class="slide bright" aria-label="방출 성운과 반사 성운">
+  <p class="eyebrow">성운 ① 밝은 것</p>
+  <h2>둘 다 밝은데, 빛나는 <em>까닭</em>도 같을까?</h2>
+  <div class="body">
+    <div class="col">
+      <figure data-obj="m17"></figure>
+      <p class="term t-emission" data-step="1">방출 성운</p>
+      <p class="def" data-step="1">주변의 별빛을 흡수하여 가열되면서<br /><span class="key">스스로 빛을 내는</span> 성운</p>
+      <p class="hue" data-step="3">사진에서는 주로 붉은빛</p>
+    </div>
+    <div class="col">
+      <figure data-obj="ngc7023"></figure>
+      <p class="term t-reflection" data-step="2">반사 성운</p>
+      <p class="def" data-step="2">주변의 별빛을 <span class="key">반사하여</span> 밝게 보이는 성운</p>
+      <p class="hue" data-step="3">사진에서는 주로 푸른빛</p>
+    </div>
+  </div>
+  <p class="page">교과서 284쪽</p>
+</section>
+
+<!-- 5. 암흑 성운 -->
+<section class="slide darkneb" aria-label="암흑 성운">
+  <p class="eyebrow">성운 ② 어두운 것</p>
+  <h2>여기에는 별이 <em>없는</em> 걸까?</h2>
+  <div class="body">
+    <figure class="big" data-obj="b68" data-name="off"></figure>
+    <div class="side">
+      <p class="ask">둘레에는 별이 가득한데<br />가운데만 검게 비어 보입니다.</p>
+      <div data-step="1">
+        <p class="term">암흑 성운</p>
+        <p class="def">뒤쪽에서 오는 별빛을 <span class="key">가로막아</span> 어둡게 보이는 성운</p>
+      </div>
+      <div class="more" data-step="2">
+        <figure class="mini" data-obj="b33"></figure>
+        <p>별이 없는 것이 아니라,<br />성간 물질이 별빛을 가리고 있습니다.</p>
+      </div>
+    </div>
+  </div>
+  <p class="page">교과서 284쪽</p>
+</section>
+
+<!-- 6. 산개 성단과 구상 성단 -->
+<section class="slide clusters" aria-label="산개 성단과 구상 성단">
+  <p class="eyebrow">성단</p>
+  <h2>별 무리도 <em>모인 모양</em>이 다르다</h2>
+  <div class="body">
+    <div class="grid">
+      <div></div>
+      <figure data-obj="m45"></figure>
+      <figure data-obj="m13"></figure>
+
+      <div></div>
+      <p class="head t-open" data-step="1">산개 성단</p>
+      <p class="head t-globular" data-step="1">구상 성단</p>
+
+      <p class="lab row" data-step="2">별의 수</p>
+      <p class="cell" data-step="2">수십 개 ~ 수만 개</p>
+      <p class="cell" data-step="2">수만 개 ~ 수십만 개</p>
+
+      <p class="lab row" data-step="3">모인 모양</p>
+      <p class="cell" data-step="3">일정한 모양 없이 <span class="key">엉성하게</span></p>
+      <p class="cell" data-step="3"><span class="key">공 모양</span>으로 빽빽하게</p>
+
+      <p class="lab row" data-step="4">주로 있는 곳</p>
+      <p class="cell" data-step="4">우리은하의 나선팔</p>
+      <p class="cell" data-step="4">우리은하의 중심부와, 은하 전체를 감싼 공 모양의 공간</p>
+    </div>
+  </div>
+  <p class="page">교과서 284쪽 · 더 알아보기</p>
+</section>
+
+<!-- 7. 같은 별자리, 같은 거리? -->
+<section class="slide distance" aria-label="별자리와 거리">
+  <p class="eyebrow">오개념 바로잡기</p>
+  <h2>같은 별자리에 있으면 <em>거리</em>도 같을까?</h2>
+  <div class="body">
+    <p class="lead">도감에 적힌, 궁수자리에서 찾은 천체까지의 거리</p>
+    <div class="rows">
+      <div class="row"><figure data-obj="m8"></figure><div class="who"><b>석호 성운</b><small>방출 성운</small></div>
+        <div class="track"><span class="fill" style="width:37%"></span><span class="val" style="left:37%">약 5,000광년</span></div></div>
+      <div class="row"><figure data-obj="m17"></figure><div class="who"><b>오메가 성운</b><small>방출 성운</small></div>
+        <div class="track"><span class="fill" style="width:40.7%"></span><span class="val" style="left:40.7%">약 5,500광년</span></div></div>
+      <div class="row"><figure data-obj="b86"></figure><div class="who"><b>바너드 86</b><small>암흑 성운</small></div>
+        <div class="track"><span class="fill" style="width:44.4%"></span><span class="val" style="left:44.4%">약 6,000광년</span></div></div>
+      <div class="row"><figure data-obj="m22"></figure><div class="who"><b>M22</b><small>구상 성단</small></div>
+        <div class="track"><span class="fill" style="width:74%"></span><span class="val" style="left:74%">약 10,000광년</span></div></div>
+    </div>
+    <div class="axis"><div><span>지구</span><span>5,000광년</span><span>10,000광년</span></div></div>
+    <p class="note" data-step="1">성운이나 성단은 그 별자리 <b>방향</b>에서 보이는 것일 뿐입니다.<br />별자리를 이루는 별과 성운·성단까지의 <b>거리는 각각 다릅니다.</b></p>
+  </div>
+  <p class="page">교과서 285쪽</p>
+</section>
+
+<!-- 8. 한눈에 정리 -->
+<section class="slide summary" aria-label="정리">
+  <p class="eyebrow">정리</p>
+  <h2>우리은하를 이루는 천체, <em>한눈에</em></h2>
+  <div class="body">
+    <div class="groups">
+      <div class="group neb">
+        <h3>성운 <small>성간 물질이 모여 구름처럼 보이는 천체</small></h3>
+        <div class="kinds">
+          <div class="kind"><figure class="mini" data-obj="m8" data-name="off"></figure>
+            <p class="name t-emission"><span class="blank" data-step="1">방출</span> 성운</p><p class="line">스스로 빛을 낸다</p></div>
+          <div class="kind"><figure class="mini" data-obj="m78" data-name="off"></figure>
+            <p class="name t-reflection"><span class="blank" data-step="2">반사</span> 성운</p><p class="line">별빛을 반사한다</p></div>
+          <div class="kind"><figure class="mini" data-obj="b33" data-name="off"></figure>
+            <p class="name t-dark"><span class="blank" data-step="3">암흑</span> 성운</p><p class="line">별빛을 가로막는다</p></div>
+        </div>
+      </div>
+      <div class="group clu">
+        <h3>성단 <small>수많은 별이 무리를 이룬 천체</small></h3>
+        <div class="kinds">
+          <div class="kind"><figure class="mini" data-obj="m7" data-name="off"></figure>
+            <p class="name t-open"><span class="blank" data-step="4">산개</span> 성단</p><p class="line">엉성하게 모여 있다</p></div>
+          <div class="kind"><figure class="mini" data-obj="m4" data-name="off"></figure>
+            <p class="name t-globular"><span class="blank" data-step="5">구상</span> 성단</p><p class="line">공 모양으로 빽빽하다</p></div>
+        </div>
+      </div>
+    </div>
+    <p class="basis">나눈 기준 · 성운은 <b>성간 물질의 밝기</b>, 성단은 <b>별이 모여 있는 정도</b></p>
+  </div>
+  <p class="page">교과서 283쪽 표에 함께 적어 봅시다</p>
+</section>
+
+<!-- 9. 탐구: 모형 만들기 -->
+<section class="slide model" aria-label="탐구: 성운과 성단의 모형 만들기">
+  <p class="eyebrow">탐구 · 해 보기</p>
+  <h2>성운과 성단의 <em>모형</em> 만들기</h2>
+  <div class="body">
+    <div class="two">
+      <div class="box">
+        <h3>성운 모형</h3>
+        <p class="need">향, 상자(옆면에 구멍 둘, 한쪽에 셀로판지), 손전등</p>
+        <ol>
+          <li>향을 피우고 상자로 덮는다.</li>
+          <li>셀로판지를 붙인 구멍에 손전등을 비추고, 다른 구멍으로 안을 들여다본다.</li>
+        </ol>
+        <p class="safe">안전 · 상자에 향이 닿지 않게 한다.</p>
+      </div>
+      <div class="box">
+        <h3>성단 모형</h3>
+        <p class="need">길게 연결된 엘이디(LED) 전구</p>
+        <ol>
+          <li>길게 연결된 엘이디 전구를 준비한다.</li>
+          <li>엘이디 전구를 공 모양으로 뭉친다.</li>
+        </ol>
+      </div>
+    </div>
+    <p class="note think" data-step="1">모형의 <b>연기, 손전등 빛, 전구</b>는 각각 실제 천체의 무엇에 해당할까요?<br />우리 모둠 모형은 <b>어떤 성운·성단의 특징</b>을 보여 주나요?</p>
+  </div>
+  <p class="page">교과서 285쪽</p>
+</section>
+
+<!-- 10. 스스로 확인하기 -->
+<section class="slide check" aria-label="스스로 확인하기">
+  <p class="eyebrow">스스로 확인하기</p>
+  <h2>오늘 배운 것, <em>확인</em>해 봅시다</h2>
+  <div class="body">
+    <div class="qs">
+      <div class="q"><small>개념 확인</small>( <span class="blank" data-step="1">방출</span> ) 성운은 성간 물질이 주변의 별빛을 흡수하여 가열되면서 스스로 빛을 내는 성운이다.</div>
+      <div class="q"><small>개념 확인</small>수많은 별이 무리를 이루고 있는 천체를 ( <span class="blank" data-step="2">성단</span> )이라고 한다.</div>
+      <div class="q"><small>사고력</small>사진 가운데에서 별이 거의 보이지 않는 까닭은?
+        <p class="ans" data-step="3">암흑 성운이 뒤쪽에서 오는 별빛을 가로막고 있기 때문이다.</p></div>
+    </div>
+    <div class="pic"><figure data-obj="b86" data-name="off"></figure></div>
+  </div>
+  <p class="credits"><span id="credit-line"></span><br />© 2026 Designed &amp; Developed by 두리쌤(@trdoolee). All rights reserved.</p>
+  <p class="page">교과서 285쪽</p>
+</section>
+
+</main>
+
+<div id="ctrl">
+  <button id="prev" type="button" aria-label="이전">←</button>
+  <span id="counter" aria-live="polite">1 / 10</span>
+  <button id="next" type="button" aria-label="다음">→</button>
+  <button id="full" type="button" aria-label="전체 화면">전체 화면</button>
+</div>
+<script type="module" src="/src/lesson.js"></script>
+</body>
+</html>
