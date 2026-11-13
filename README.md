@@ -6,7 +6,9 @@
 학생은 밤마다 임무를 받아 하늘 지도에서 실제 천문 관측 사진 20장을 모으고, 생김새로 나누어 묶고, 도감에 등록합니다.
 태블릿과 스마트폰의 가로 화면에서 터치로 하며, 서버나 로그인이 없습니다.
 
-아직 GitHub 저장소와 배포 주소는 없습니다. 지금은 이 폴더에서 직접 실행해서 확인합니다.
+- 게임: https://galaxy-scope-trdoolee.vercel.app
+- 선생님 안내: https://galaxy-scope-trdoolee.vercel.app/teacher.html
+- 저장소: https://github.com/mrdoolee/galaxy-scope (`main`에 push하면 Vercel 프로젝트 `galaxy-scope`가 자동으로 배포합니다)
 
 ## 학생은 이렇게 합니다
 
