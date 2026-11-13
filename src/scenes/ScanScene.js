@@ -13,7 +13,7 @@ import { inBonus, bonusProgress } from '../logic/bonus.js';
 import { tickNight, isDawn, endDay, nightTotal, clockRuns } from '../logic/night.js';
 import { shotStars } from '../logic/rating.js';
 import { recordCapture } from '../logic/capture.js';
-import { tutorialOn, tutorialTarget, tutorialStep } from '../logic/tutorial.js';
+import { tutorialOn, tutorialTarget, tutorialStep, soloHintOn } from '../logic/tutorial.js';
 import { DECK, DECK_IDS, DECK_SIZE, getState, persist, commit, stash, refreshRequest } from './gameState.js';
 import { addText, addPlate, COLOR, MIN_FONT } from './ui/style.js';
 import { makeButton } from './ui/button.js';
@@ -27,6 +27,9 @@ import { addBackdropPiece } from './ui/backdrop.js';
 import { makeNightBar } from './ui/nightBar.js';
 import { runDayWait } from './ui/dayWait.js';
 import { showCaptureCard } from './ui/captureCard.js';
+import { showToast } from './ui/toast.js';
+
+const SOLO_HINT_MS = 4500; // "이제 스스로 찾아보세요" 알림이 떠 있는 시간
 
 const CX = GAME_WIDTH / 2;
 const CY = GAME_HEIGHT / 2;
@@ -91,6 +94,17 @@ export default class ScanScene extends Phaser.Scene {
     this.refreshPanel();
     this.buildTutorial(state);
     this.showNight(true);
+    this.toastObj = null; // 앞 방문의 알림(이미 지워졌다)을 잊는다
+    this.soloHint = !this.bonus && soloHintOn(state);
+    this.showSoloHint();
+  }
+
+  // 첫 탐사 안내가 끝난 뒤 다음 훑기를 시작할 때 한 번: 이제 왼쪽 판을 보고 스스로 찾으라고 알린다.
+  // 이 구역에 찾을 대상이 있을 때만(왼쪽 판에 「찾을 천체」가 떠 있을 때만) 띄운다.
+  showSoloHint() {
+    if (!this.soloHint || !this.targetPanel.currentId) return;
+    this.soloHint = false;
+    showToast(this, TUTORIAL_TEXT.solo, { ms: SOLO_HINT_MS });
   }
 
   // ── 첫 탐사 안내: 새 판에서 첫 카드를 얻을 때까지 화살표, 얼룩을 두르는 원, 누를 버튼 표시로 한 단계씩 이끈다.
@@ -499,6 +513,7 @@ export default class ScanScene extends Phaser.Scene {
     this.zoomBtn.container.setVisible(true);
     this.backBtn.setEnabled(true);
     this.lockId = undefined; // 다음 프레임에 버튼과 조준 원을 다시 그린다
+    this.showSoloHint(); // 첫 카드를 얻고 「계속 훑기」로 돌아온 때
   }
 
   // 초점 눈금은 혼자 오간다. 사진은 눈금이 숨은 목표에 가까울수록 또렷해진다.
@@ -538,6 +553,7 @@ export default class ScanScene extends Phaser.Scene {
     this.backBtn.setEnabled(false);
     const result = recordCapture(getState(this), { id, stars: rating.stars, bonus: this.bonus, deckIds: DECK_IDS });
     commit(this, result.state);
+    this.soloHint = !this.bonus && soloHintOn(result.state); // 첫 카드였다면 다음 훑기에서 알린다
     this.sinceSave = 0;
     this.found = new Set(result.state.foundIds);
     this.tonightIds.push(id);

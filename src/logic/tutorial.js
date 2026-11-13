@@ -5,6 +5,10 @@ import { SMUDGE_SPEED } from '../config/balance.js';
 // 안내를 하는가: 모으기 단계이고 아직 한 장도 찾지 못했다. 첫 카드를 얻으면 끝난다(따로 저장하지 않는다).
 export const tutorialOn = (state) => state.phase === 'collect' && state.foundIds.length === 0;
 
+// 안내가 끝난 바로 뒤(카드가 딱 한 장): 다음 훑기를 시작할 때 "이제 스스로 찾아보세요"를 한 번 알린다.
+// 따로 저장하지 않으므로 한 장인 채로 구역에 다시 들어오면 또 나온다(두 번째 카드를 얻으면 더는 나오지 않는다).
+export const soloHintOn = (state) => state.phase === 'collect' && state.foundIds.length === 1;
+
 // 안내할 대상: 이 구역이 임무 구역이면 임무 순서로 아직 못 찾은 첫 천체의 자리. 다른 구역이거나 임무가 없으면 null.
 export function tutorialTarget(request, zoneId, placed, foundIds) {
   if (!request || request.zoneId !== zoneId) return null;

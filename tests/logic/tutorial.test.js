@@ -1,9 +1,9 @@
-import { tutorialOn, tutorialTarget, tutorialStep } from '../../src/logic/tutorial.js';
+import { tutorialOn, tutorialTarget, tutorialStep, soloHintOn } from '../../src/logic/tutorial.js';
 import { calloutSpot, mapZoneIds } from '../../src/logic/layout.js';
 import { clockRuns } from '../../src/logic/night.js';
 import { newGame } from '../../src/logic/save.js';
 import { SMUDGE_SPEED } from '../../src/config/balance.js';
-import { TUTORIAL_TEXT } from '../../src/data/copy.js';
+import { TUTORIAL_TEXT, SCAN_TEXT } from '../../src/data/copy.js';
 import { ZONES } from '../../src/data/zones.js';
 import { OBJECTS } from '../../src/data/objects.js';
 
@@ -14,6 +14,13 @@ describe('첫 탐사 안내를 하는 때', () => {
   });
   it('모으기 단계가 아니면 하지 않는다', () => {
     expect(tutorialOn({ ...newGame(1), phase: 'result' })).toBe(false);
+  });
+  it('안내가 끝난 바로 뒤(카드 한 장)에만 "이제 스스로 찾아보세요"를 알린다', () => {
+    expect(soloHintOn(newGame(1))).toBe(false);
+    expect(soloHintOn({ ...newGame(1), foundIds: ['m42'] })).toBe(true);
+    expect(soloHintOn({ ...newGame(1), foundIds: ['m42', 'm45'] })).toBe(false);
+    expect(soloHintOn({ ...newGame(1), foundIds: ['m42'], phase: 'result' })).toBe(false);
+    expect(TUTORIAL_TEXT.solo).toContain(SCAN_TEXT.target); // 왼쪽 판의 머리글 이름 그대로 가리킨다
   });
   it('안내하는 동안 밤 시계는 가지 않는다', () => {
     const on = { phase: 'collect', bonus: false, mode: 'sweep', hasMission: true, dayWait: false };
